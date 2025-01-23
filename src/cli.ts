@@ -172,14 +172,21 @@ export interface AdditionalCliArguments {
 export type SelectedCommandWithArgs<
   C extends Record<string, Command>,
   O extends Record<string, CliArgument>
-> = {
-  [K in keyof C]: {
-    command: K | undefined
-    args: ParsedArgs<C[K]['options']> & ParsedArgs<O>
-    operands: string[]
-    anyValues: boolean
-  }
-}[keyof C]
+> = keyof C extends never
+  ? {
+      command: undefined;
+      args: ParsedArgs<O>;
+      operands: string[];
+      anyValues: boolean;
+    }
+  : {
+      [K in keyof C]: {
+        command: K;
+        args: ParsedArgs<C[K]['options']> & ParsedArgs<O>;
+        operands: string[];
+        anyValues: boolean;
+      };
+    }[keyof C];
 
 /**
  * Parse CLI Arguments and return the parsed typesafe results.
@@ -502,7 +509,7 @@ export function parseCliArguments<
   }
 
   // Step 4: Return results
-  return { args: parsedArgs, operands, command: subcommand, anyValues: args.length > 0 }
+  return { args: parsedArgs, operands, command: subcommand as any, anyValues: args.length > 0 }
 }
 
 /**
