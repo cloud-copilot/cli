@@ -69,6 +69,10 @@
             {
               "breaking": true,
               "release": "patch"
+            },
+            {
+              "type": "*",
+              "release": "patch"
             }
           ]
         }
