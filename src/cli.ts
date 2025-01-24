@@ -40,7 +40,7 @@ export type StandardArgument = {
   description: string
 }
 
-export type EnumArgument = {
+export type EnumArgument<ValidValues extends string[] = string[]> = {
   /**
    * Whether the argument accepts single or multiple values.
    */
@@ -54,7 +54,7 @@ export type EnumArgument = {
   /**
    * The valid values for the argument.
    */
-  validValues: string[]
+  validValues: ValidValues
 
   /**
    * The description of the argument.
@@ -65,7 +65,7 @@ export type EnumArgument = {
 /**
  * A CLI argument that can be accepted for a command.
  */
-export type CliArgument = BooleanArgument | StandardArgument | EnumArgument
+export type CliArgument = BooleanArgument | StandardArgument | EnumArgument<string[]>
 
 export type Command = {
   description: string
@@ -76,8 +76,8 @@ function isBooleanOption(option: CliArgument): option is BooleanArgument {
   return (option as BooleanArgument).values === 'none'
 }
 
-function isEnumOption(option: CliArgument): option is EnumArgument {
-  return (option as EnumArgument).type === 'enum'
+function isEnumOption(option: CliArgument): option is EnumArgument<string[]> {
+  return (option as any).type === 'enum'
 }
 
 export type OptionConfig = {
@@ -102,6 +102,8 @@ export function createConfig<T extends Record<string, CliArgument>>(config: T): 
   return config
 }
 
+type InferLiteralArray<T> = T extends ReadonlyArray<infer U> ? T : never
+
 type ParsedArgs<T extends Record<string, CliArgument>> = {
   [K in keyof T as K]: T[K] extends {
     type: 'string'
@@ -119,7 +121,11 @@ type ParsedArgs<T extends Record<string, CliArgument>> = {
             values: 'none'
           }
         ? boolean
-        : never
+        : T[K] extends { type: 'enum'; validValues: string[] }
+          ? T[K]['values'] extends 'single'
+            ? T[K]['validValues'][number] | undefined
+            : T[K]['validValues'][number][]
+          : never
 }
 
 interface ArgumentChunk {
