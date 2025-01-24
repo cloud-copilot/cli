@@ -9,8 +9,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      issues: write
+      contents: write
     steps:
       - name: Check out
         uses: actions/checkout@v4
