@@ -1,3 +1,11 @@
+## [0.1.7](https://github.com/cloud-copilot/cli/compare/v0.1.6...v0.1.7) (2025-01-24)
+
+
+### Bug Fixes
+
+* correcting type inference for enum arguments ([6590783](https://github.com/cloud-copilot/cli/commit/65907838b7336f2b8ad41ee6c87cc34fefba4497))
+* fixing boolean return types ([47729cd](https://github.com/cloud-copilot/cli/commit/47729cd54644763ee1961116031bb9ef319d3307))
+
 ## [0.1.6](https://github.com/cloud-copilot/cli/compare/v0.1.5...v0.1.6) (2025-01-24)
 
 ## [0.1.5](https://github.com/cloud-copilot/cli/compare/v0.1.4...v0.1.5) (2025-01-24)
