@@ -174,19 +174,19 @@ export type SelectedCommandWithArgs<
   O extends Record<string, CliArgument>
 > = keyof C extends never
   ? {
-      command: undefined;
-      args: ParsedArgs<O>;
-      operands: string[];
-      anyValues: boolean;
+      command: undefined
+      args: ParsedArgs<O>
+      operands: string[]
+      anyValues: boolean
     }
   : {
       [K in keyof C]: {
-        command: K;
-        args: ParsedArgs<C[K]['options']> & ParsedArgs<O>;
-        operands: string[];
-        anyValues: boolean;
-      };
-    }[keyof C];
+        command: K
+        args: ParsedArgs<C[K]['options']> & ParsedArgs<O>
+        operands: string[]
+        anyValues: boolean
+      }
+    }[keyof C]
 
 /**
  * Parse CLI Arguments and return the parsed typesafe results.
