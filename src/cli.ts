@@ -7,7 +7,7 @@ export type BooleanArgument = {
   /**
    * The single character flag for the argument.
    */
-  character: string
+  character: string;
 
   /**
    * Must be 'none' for a boolean argument.
