@@ -80,6 +80,12 @@
       "@semantic-release/release-notes-generator",
       "@semantic-release/changelog",
       [
+        "@semantic-release/npm",
+        {
+          "npmPublish": true
+        }
+      ],
+      [
         "@semantic-release/git",
         {
           "assets": [
@@ -88,12 +94,6 @@
             "CHANGELOG.md"
           ],
           "message": "chore(release): ${nextRelease.version} [skip ci]"
-        }
-      ],
-      [
-        "@semantic-release/npm",
-        {
-          "npmPublish": true
         }
       ],
       [
