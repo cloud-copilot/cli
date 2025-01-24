@@ -116,7 +116,7 @@ type ParsedArgs<T extends Record<string, CliArgument>> = {
         ? number | undefined
         : number[]
       : T[K] extends {
-            type: 'boolean'
+            values: 'none'
           }
         ? boolean
         : never
