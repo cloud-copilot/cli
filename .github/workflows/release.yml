@@ -21,11 +21,13 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install
-        run: npm ci
-
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
+        run: |
+          npm ci
+          npm run format-check
+          npm run build
+          npm run test
+          npx semantic-release
