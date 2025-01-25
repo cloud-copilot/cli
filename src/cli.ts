@@ -733,10 +733,18 @@ export function printHelpContents<
   additionalArgs?: AdditionalCliArguments,
   selectedSubcommand?: string | undefined
 ): void {
-  const operandsName = additionalArgs?.operandsName ?? 'operands'
+  const operandsName = additionalArgs?.operandsName ?? 'operand'
+
+  const anyGlobalFlags = Object.values(cliOptions).some((option) => isBooleanOption(option))
 
   if (selectedSubcommand) {
-    let usageString = `Usage: ${command} ${selectedSubcommand} [options] [flags] [--] [${operandsName}1] [${operandsName}2]`
+    const anyCommandFlags = Object.values(subcommands[selectedSubcommand].options).some((option) =>
+      isBooleanOption(option)
+    )
+
+    const flags = anyGlobalFlags || anyCommandFlags ? ' [flags]' : ''
+
+    let usageString = `Usage: ${command} ${selectedSubcommand} [options]${flags} [--] [${operandsName}1] [${operandsName}2]`
 
     console.log(usageString)
     console.log(`\n${subcommands[selectedSubcommand].description}`)
@@ -744,6 +752,12 @@ export function printHelpContents<
     printOptions(subcommands[selectedSubcommand].options)
     console.log('')
   } else {
+    const anyCommandFlags = Object.values(subcommands).some((subcommand) =>
+      Object.values(subcommand.options).some((option) => isBooleanOption(option))
+    )
+
+    const flags = anyGlobalFlags || anyCommandFlags ? ' [flags]' : ''
+
     let usageString = `Usage: ${command}`
     const subcommandKeys = Object.keys(subcommands)
     if (subcommandKeys.length > 0 && additionalArgs?.requireSubcommand) {
@@ -752,7 +766,7 @@ export function printHelpContents<
       usageString += ' [subcommand]'
     }
 
-    usageString += ` [options] [flags] [--] [${operandsName}1] [${operandsName}2]`
+    usageString += ` [options]${flags} [--] [${operandsName}1] [${operandsName}2]`
 
     console.log(usageString)
 
