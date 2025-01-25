@@ -192,6 +192,7 @@ export type SelectedCommandWithArgs<
       args: ParsedArgs<O>
       operands: string[]
       anyValues: boolean
+      printHelp: () => void
     }
   : {
       [K in keyof C]: {
@@ -199,6 +200,7 @@ export type SelectedCommandWithArgs<
         args: ParsedArgs<C[K]['options']> & ParsedArgs<O>
         operands: string[]
         anyValues: boolean
+        printHelp: () => void
       }
     }[keyof C]
 
@@ -523,7 +525,15 @@ export function parseCliArguments<
   }
 
   // Step 4: Return results
-  return { args: parsedArgs, operands, command: subcommand as any, anyValues: args.length > 0 }
+  return {
+    args: parsedArgs,
+    operands,
+    command: subcommand as any,
+    anyValues: args.length > 0,
+    printHelp: () => {
+      printHelpContents(command, subcommands, cliOptions, additionalArgs, subcommand)
+    }
+  }
 }
 
 /**
