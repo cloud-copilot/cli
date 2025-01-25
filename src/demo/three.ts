@@ -7,7 +7,7 @@ import { parseCliArguments } from '../cli.js'
 */
 
 const args = parseCliArguments(
-  'one',
+  'three',
   {},
   {
     verbose: {
