@@ -6,8 +6,8 @@ import { parseCliArguments } from '../cli.js'
 
 */
 
-const args = parseCliArguments(
-  'one',
+const cli = parseCliArguments(
+  'two',
   {},
   {
     verbose: {
@@ -17,11 +17,12 @@ const args = parseCliArguments(
     }
   },
   {
-    showHelpIfNoArgs: true,
     version: '1.0.0'
   }
 )
 
-console.log(JSON.stringify(args, null, 2))
+console.log(JSON.stringify(cli, null, 2))
 
-console.log(args.args.verbose)
+console.log(cli.args.verbose)
+
+cli.printHelp()
