@@ -173,6 +173,14 @@ export interface AdditionalCliArguments {
    * If there are zero arguments, show the help message. Defaults to false.
    */
   showHelpIfNoArgs?: boolean
+
+  /**
+   * Expect operands. Whether the app expects operands. Defaults to true.
+   *
+   * Changes the help message to include operands.
+   */
+
+  expectOperands?: boolean
 }
 
 export type SelectedCommandWithArgs<
@@ -733,7 +741,10 @@ export function printHelpContents<
   additionalArgs?: AdditionalCliArguments,
   selectedSubcommand?: string | undefined
 ): void {
+  const operandsExpected =
+    additionalArgs?.expectOperands != undefined ? additionalArgs?.expectOperands : true
   const operandsName = additionalArgs?.operandsName ?? 'operand'
+  const operandsString = operandsExpected ? ` [--] [${operandsName}1] [${operandsName}2]` : ''
 
   const anyGlobalFlags = Object.values(cliOptions).some((option) => isBooleanOption(option))
 
@@ -744,7 +755,7 @@ export function printHelpContents<
 
     const flags = anyGlobalFlags || anyCommandFlags ? ' [flags]' : ''
 
-    let usageString = `Usage: ${command} ${selectedSubcommand} [options]${flags} [--] [${operandsName}1] [${operandsName}2]`
+    let usageString = `Usage: ${command} ${selectedSubcommand} [options]${flags}${operandsString}`
 
     console.log(usageString)
     console.log(`\n${subcommands[selectedSubcommand].description}`)
@@ -766,7 +777,7 @@ export function printHelpContents<
       usageString += ' [subcommand]'
     }
 
-    usageString += ` [options]${flags} [--] [${operandsName}1] [${operandsName}2]`
+    usageString += ` [options]${flags}${operandsString}`
 
     console.log(usageString)
 
