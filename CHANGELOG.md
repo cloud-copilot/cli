@@ -1,3 +1,16 @@
+## [0.1.8](https://github.com/cloud-copilot/cli/compare/v0.1.7...v0.1.8) (2025-01-25)
+
+
+### Bug Fixes
+
+* only show flags in help contents if there are flags ([469c9ac](https://github.com/cloud-copilot/cli/commit/469c9ac0c62e7566abee367a4018a88b43ee2bf9))
+
+
+### Features
+
+* add a printHelp call back to the parse return object. ([43de6f0](https://github.com/cloud-copilot/cli/commit/43de6f045929efa7abedfa5ecd0fd6839d1b691c))
+* if disabled, do not show operands in the help output ([30e512c](https://github.com/cloud-copilot/cli/commit/30e512cfb3c8066e83080ec048e14a4a6a4cb4f2))
+
 ## [0.1.7](https://github.com/cloud-copilot/cli/compare/v0.1.6...v0.1.7) (2025-01-24)
 
 
