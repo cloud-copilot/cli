@@ -231,6 +231,7 @@ export function parseCliArguments<
   const numberOfSubcommands = subcommandKeys.length
   const combinedOptions: Record<string, CliArgument> = { ...cliOptions }
   let subcommand: string | undefined
+  console.log(args)
 
   if (args.length === 0 && additionalArgs?.showHelpIfNoArgs) {
     printHelpContents(command, subcommands, cliOptions, additionalArgs)
