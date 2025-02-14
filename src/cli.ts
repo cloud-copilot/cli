@@ -181,6 +181,13 @@ export interface AdditionalCliArguments {
    */
 
   expectOperands?: boolean
+
+  /**
+   * Allow operands from standard input. If true, the help will include a note about reading operands from standard input.
+   *
+   * Defaults to false
+   */
+  allowOperandsFromStdin?: boolean
 }
 
 export type SelectedCommandWithArgs<
@@ -766,6 +773,9 @@ export function printHelpContents<
     const flags = anyGlobalFlags || anyCommandFlags ? ' [flags]' : ''
 
     let usageString = `Usage: ${command} ${selectedSubcommand} [options]${flags}${operandsString}`
+    if (additionalArgs?.allowOperandsFromStdin) {
+      usageString += `\n       <${operandsName}s to stdout> | ${command} ${selectedSubcommand} [options]${flags}`
+    }
 
     console.log(usageString)
     console.log(`\n${subcommands[selectedSubcommand].description}`)
@@ -779,15 +789,19 @@ export function printHelpContents<
 
     const flags = anyGlobalFlags || anyCommandFlags ? ' [flags]' : ''
 
-    let usageString = `Usage: ${command}`
+    let singleUseString = `${command}`
     const subcommandKeys = Object.keys(subcommands)
     if (subcommandKeys.length > 0 && additionalArgs?.requireSubcommand) {
-      usageString += ' <subcommand>'
+      singleUseString += ' <subcommand>'
     } else if (subcommandKeys.length > 0) {
-      usageString += ' [subcommand]'
+      singleUseString += ' [subcommand]'
     }
 
-    usageString += ` [options]${flags}${operandsString}`
+    singleUseString += ` [options]${flags}`
+    let usageString = `Usage: ${singleUseString}${operandsString}`
+    if (additionalArgs?.allowOperandsFromStdin) {
+      usageString += `\n       <${operandsName}s to stdout> | ${singleUseString}`
+    }
 
     console.log(usageString)
 
