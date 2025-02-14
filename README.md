@@ -248,6 +248,7 @@ Options:
   - `envPrefix` - A prefix to use for environment variables. If provided, the library will look for environment variables that start with the prefix and use them as defaults for the arguments. For example, if the prefix is `MY_APP`, the library will look for environment variables like `MY_APP_REGIONS`, `MY_APP_ACCOUNT`, etc. These variables will be validated just like the CLI arguments. Any values provided on the CLI will override the environment variables.
   - `operandsName` - The name of the operands. This is used in the help text. By default, this is `operand`.
   - `requireSubcommand` - If true, a subcommand is required. By default, this is false.
+  - `allowOperandsFromStdin` - If true, the help text will include a usage example of reading operands from stdin. By default, this is false.
 
 ## Reading from stdin
 
