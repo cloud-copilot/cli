@@ -2,6 +2,8 @@
 
 [![NPM Version](https://img.shields.io/npm/v/@cloud-copilot/cli.svg?logo=nodedotjs)](https://www.npmjs.com/package/@cloud-copilot/cli) [![MIT License](https://img.shields.io/github/license/cloud-copilot/cli)](LICENSE.txt)
 
+[![GuardDog](https://github.com/cloud-copilot/cli/actions/workflows/guarddog.yml/badge.svg)](https://github.com/cloud-copilot/cli/actions/workflows/guarddog.yml)
+
 Utilities for standardizing working CLIs in Typescript.
 
 - Standardizes the way subcommands, arguments, and operands are parsed and validated
