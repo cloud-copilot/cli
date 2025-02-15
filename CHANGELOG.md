@@ -1,3 +1,10 @@
+## [0.1.13](https://github.com/cloud-copilot/cli/compare/v0.1.12...v0.1.13) (2025-02-15)
+
+
+### Bug Fixes
+
+* readStdin leaves open resources that can cause a process to hang when there is no input to stdin. ([c188b4a](https://github.com/cloud-copilot/cli/commit/c188b4a8542dca38532feda65d39ac94f9f0d6e5))
+
 ## [0.1.12](https://github.com/cloud-copilot/cli/compare/v0.1.11...v0.1.12) (2025-02-14)
 
 ## [0.1.11](https://github.com/cloud-copilot/cli/compare/v0.1.10...v0.1.11) (2025-02-14)
