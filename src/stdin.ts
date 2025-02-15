@@ -16,6 +16,8 @@ export async function readStdin(readWait: number | undefined): Promise<string> {
     let data = ''
     const timeout = setTimeout(() => {
       if (data.length === 0) {
+        stdin.pause()
+        stdin.removeAllListeners('data')
         resolve(data)
       }
     }, readWait)
