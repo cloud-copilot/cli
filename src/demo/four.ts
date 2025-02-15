@@ -2,7 +2,7 @@ import { parseCliArguments } from '../cli.js'
 
 /*
 
-  npx tsx src/demo/three.ts
+  npx tsx src/demo/four.ts
 
 */
 
