@@ -10,9 +10,9 @@ export type BooleanArgument = {
   character: string
 
   /**
-   * Must be 'none' for a boolean argument.
+   * The type of the argument.
    */
-  values: 'none'
+  type: 'boolean'
 
   /**
    * The description of the argument.
@@ -40,7 +40,7 @@ export type StandardArgument = {
   description: string
 }
 
-export type EnumArgument<ValidValues extends string[] = string[]> = {
+export type EnumArgument<ValidValues extends readonly string[]> = {
   /**
    * Whether the argument accepts single or multiple values.
    */
@@ -65,18 +65,18 @@ export type EnumArgument<ValidValues extends string[] = string[]> = {
 /**
  * A CLI argument that can be accepted for a command.
  */
-export type CliArgument = BooleanArgument | StandardArgument | EnumArgument<string[]>
+export type CliArgument = BooleanArgument | StandardArgument | EnumArgument<readonly string[]>
 
-export type Command = {
+export type Subcommand = {
   description: string
   options: Record<string, CliArgument>
 }
 
 function isBooleanOption(option: CliArgument): option is BooleanArgument {
-  return (option as BooleanArgument).values === 'none'
+  return (option as BooleanArgument).type === 'boolean'
 }
 
-function isEnumOption(option: CliArgument): option is EnumArgument<string[]> {
+function isEnumOption(option: CliArgument): option is EnumArgument<readonly string[]> {
   return (option as any).type === 'enum'
 }
 
@@ -102,8 +102,6 @@ export function createConfig<T extends Record<string, CliArgument>>(config: T): 
   return config
 }
 
-type InferLiteralArray<T> = T extends ReadonlyArray<infer U> ? T : never
-
 type ParsedArgs<T extends Record<string, CliArgument>> = {
   [K in keyof T as K]: T[K] extends {
     type: 'string'
@@ -118,10 +116,10 @@ type ParsedArgs<T extends Record<string, CliArgument>> = {
         ? number | undefined
         : number[]
       : T[K] extends {
-            values: 'none'
+            type: 'boolean'
           }
         ? boolean
-        : T[K] extends { type: 'enum'; validValues: string[] }
+        : T[K] extends EnumArgument<readonly string[]>
           ? T[K]['values'] extends 'single'
             ? T[K]['validValues'][number] | undefined
             : T[K]['validValues'][number][]
@@ -179,7 +177,6 @@ export interface AdditionalCliArguments {
    *
    * Changes the help message to include operands.
    */
-
   expectOperands?: boolean
 
   /**
@@ -190,12 +187,12 @@ export interface AdditionalCliArguments {
   allowOperandsFromStdin?: boolean
 }
 
-export type SelectedCommandWithArgs<
-  C extends Record<string, Command>,
+export type SelectedSubcommandWithArgs<
+  C extends Record<string, Subcommand>,
   O extends Record<string, CliArgument>
 > = keyof C extends never
   ? {
-      command: undefined
+      subcommand: undefined
       args: ParsedArgs<O>
       operands: string[]
       anyValues: boolean
@@ -203,7 +200,7 @@ export type SelectedCommandWithArgs<
     }
   : {
       [K in keyof C]: {
-        command: K
+        subcommand: K
         args: ParsedArgs<C[K]['options']> & ParsedArgs<O>
         operands: string[]
         anyValues: boolean
@@ -222,13 +219,13 @@ export type SelectedCommandWithArgs<
  */
 export function parseCliArguments<
   O extends Record<string, CliArgument>,
-  C extends Record<string, Command>
+  C extends Record<string, Subcommand>
 >(
   command: string,
   subcommands: C,
   cliOptions: Config<O>,
   additionalArgs?: AdditionalCliArguments
-): SelectedCommandWithArgs<C, O> {
+): SelectedSubcommandWithArgs<C, O> {
   const args = additionalArgs?.args ?? process.argv.slice(2)
   const env = additionalArgs?.env ?? process.env
   const parsedArgs: any = {}
@@ -301,7 +298,7 @@ export function parseCliArguments<
               }
               parsedArgs[option] = validValues
             }
-          } else if (config.values === 'none') {
+          } else if (config.type === 'boolean') {
             parsedArgs[option] = true
           } else if (config.values === 'single') {
             const { parsed, invalid } = validateTypes(config.type, value!)
@@ -452,7 +449,7 @@ export function parseCliArguments<
           }
           parsedArgs[matchingOption] = validValues
         }
-      } else if (optionConfig.values === 'none') {
+      } else if (optionConfig.type === 'boolean') {
         //set boolean value
         parsedArgs[matchingOption] = true
         //Handle extra values
@@ -535,7 +532,7 @@ export function parseCliArguments<
   return {
     args: parsedArgs,
     operands,
-    command: subcommand as any,
+    subcommand: subcommand as any,
     anyValues: args.length > 0,
     printHelp: () => {
       printHelpContents(command, subcommands, cliOptions, additionalArgs, subcommand)
@@ -555,7 +552,7 @@ function initializeOptionDefaults<T extends Record<string, CliArgument>>(
   cliOptions: T
 ): any {
   for (const [key, option] of Object.entries(cliOptions)) {
-    if (option.values === 'none') {
+    if (option.type === 'boolean') {
       parsedArgs[key] = false //(option as BooleanOption).default
       if (option.character) {
         booleanOptions[(option as BooleanArgument).character.toLowerCase()] = key
@@ -635,7 +632,7 @@ function parseEnvironmentVariables(
             }
             parsedArgs[option] = validValues
           }
-        } else if (config.values === 'none') {
+        } else if (config.type === 'boolean') {
           parsedArgs[option] = true
         } else if (config.values === 'single') {
           const { parsed, invalid } = validateTypes(config.type, value!)
@@ -750,7 +747,7 @@ function camelToKebabCase(input: string): string {
 
 export function printHelpContents<
   O extends Record<string, CliArgument>,
-  C extends Record<string, Command>
+  C extends Record<string, Subcommand>
 >(
   command: string,
   subcommands: C,
@@ -808,7 +805,7 @@ export function printHelpContents<
     const longestCommand = subcommandKeys.reduce((acc, cmd) => Math.max(acc, cmd.length), 0)
 
     if (subcommandKeys.length > 0) {
-      console.log('Commands:')
+      console.log('Subcommands:')
       for (const cmd of subcommandKeys) {
         const description = subcommands[cmd].description
         console.log(`  ${(cmd + ':').padEnd(longestCommand + 1)} ${description}`)
@@ -835,7 +832,7 @@ export function printHelpContents<
   printOptions(globalOptions)
 }
 
-function printOptions<O extends Record<string, CliArgument>, C extends Record<string, Command>>(
+function printOptions<O extends Record<string, CliArgument>, C extends Record<string, Subcommand>>(
   cliOptions: Config<O>
 ): void {
   const longestOption =
@@ -862,6 +859,8 @@ function printOptions<O extends Record<string, CliArgument>, C extends Record<st
       } else {
         optionString += `Valid values: ${option.validValues.join(', ')}.`
       }
+    } else if (option.type === 'boolean') {
+      // Do nothing
     } else if (option.values === 'single') {
       optionString += `One ${option.type} required`
     } else if (option.values === 'multiple') {

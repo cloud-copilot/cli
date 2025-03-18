@@ -6,14 +6,14 @@ import { parseCliArguments } from '../cli.js'
 
 */
 
-const args = parseCliArguments(
+const cli = parseCliArguments(
   'four',
   {},
   {
     verbose: {
       description: 'Print more information',
       character: 'v',
-      values: 'none'
+      type: 'boolean'
     },
     type: {
       description: 'Type of the file',
@@ -30,12 +30,13 @@ const args = parseCliArguments(
   },
   {
     showHelpIfNoArgs: true,
-    version: '1.0.0'
+    version: '1.0.0',
+    operandsName: 'op'
   }
 )
 
-console.log(JSON.stringify(args, null, 2))
+console.log(JSON.stringify(cli, null, 2))
 
-console.log(args.args.verbose)
-console.log(args.args.type)
-console.log(args.args.formats)
+console.log(cli.args.verbose)
+console.log(cli.args.type)
+console.log(cli.args.formats)

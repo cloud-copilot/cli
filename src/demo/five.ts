@@ -15,7 +15,7 @@ async function run() {
       verbose: {
         description: 'Print more information',
         character: 'v',
-        values: 'none'
+        type: 'boolean'
       },
       type: {
         description: 'Type of the file',
@@ -34,7 +34,7 @@ async function run() {
         type: 'number',
         values: 'single'
       }
-    },
+    } as const,
     {
       version: '1.0.0'
     }

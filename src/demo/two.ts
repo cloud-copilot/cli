@@ -13,7 +13,7 @@ const cli = parseCliArguments(
     verbose: {
       description: 'Print more information',
       character: 'v',
-      values: 'none'
+      type: 'boolean'
     }
   },
   {
