@@ -6,23 +6,23 @@ import { parseCliArguments } from '../cli.js'
 
 */
 
-const args = parseCliArguments(
+const cli = parseCliArguments(
   'three',
   {},
   {
     verbose: {
       description: 'Print more information',
       character: 'v',
-      values: 'none'
+      type: 'boolean'
     },
     type: {
       description: 'Type of the file',
       type: 'enum',
-      validValues: ['json', 'yaml', 'xml'],
+      validValues: ['json', 'yaml', 'xml'] as const,
       values: 'single'
     },
     formats: {
-      description: 'Type of the file',
+      description: 'Image types',
       type: 'enum',
       validValues: ['gif', 'jpg', 'png', 'svg'],
       values: 'multiple'
@@ -34,8 +34,8 @@ const args = parseCliArguments(
   }
 )
 
-console.log(JSON.stringify(args, null, 2))
+console.log(JSON.stringify(cli, null, 2))
 
-console.log(args.args.verbose)
-console.log(args.args.type)
-console.log(args.args.formats)
+console.log(cli.args.verbose)
+console.log(cli.args.type)
+console.log(cli.args.formats)

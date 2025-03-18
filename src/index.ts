@@ -1,5 +1,4 @@
 export {
-  createConfig,
   parseCliArguments,
   printHelpContents,
   type AdditionalCliArguments,

@@ -6,7 +6,7 @@ import { parseCliArguments } from '../cli.js'
 
 */
 
-const args = parseCliArguments(
+const cli = parseCliArguments(
   'one',
   {
     init: {
@@ -15,7 +15,7 @@ const args = parseCliArguments(
         s3: {
           description: 'Use S3 as the storage',
           character: 's',
-          values: 'none'
+          type: 'boolean'
         },
         language: {
           description: 'The language to use',
@@ -40,7 +40,7 @@ const args = parseCliArguments(
     verbose: {
       description: 'Print more information',
       character: 'v',
-      values: 'none'
+      type: 'boolean'
     }
   },
   {
@@ -50,8 +50,8 @@ const args = parseCliArguments(
   }
 )
 
-console.log(JSON.stringify(args, null, 2))
+console.log(JSON.stringify(cli, null, 2))
 
-if (args.command === 'init') {
-  console.log(args.args.s3)
+if (cli.subcommand === 'init') {
+  console.log(cli.args.s3)
 }

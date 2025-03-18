@@ -22,7 +22,7 @@ I was inspired by https://github.com/lirantal/nodejs-cli-apps-best-practices and
 ```typescript
 import {parseCliArguments} from '@cloud-copilot/cli';
 
-const parsedArguments = const parsed2 = parseArguments(
+const cli = parseArguments(
   'my-command',
   // optional subcommands
   init: {
@@ -68,18 +68,18 @@ const parsedArguments = const parsed2 = parseArguments(
 This will automatically pull in the arguments from the command line and validate them. If any arguments are not valid, it will throw an error with the message of what is wrong. If all arguments and subcommands are valid, it will return an object with a type safe response.
 
 ```typescript
-parsedArguments.command // string | undefined
-parsedArguments.args.regions // string[]
-parsedArguments.args.account // string | undefined
-parsedArguments.args.ssl // boolean
-parsedArguments.args.port // number | undefined
-parsedArguments.args.points // number[]
+cli.subcommand // string | undefined
+cli.args.regions // string[]
+cli.args.account // string | undefined
+cli.args.ssl // boolean
+cli.args.port // number | undefined
+cli.args.points // number[]
 
-parsedArguments.anyValues // boolean, whether any values were provided on the CLI
+cli.anyValues // boolean, whether any values were provided on the CLI
 
-if (parsedArguments.command === 'init') {
+if (cli.subcommand === 'init') {
   // Type Checked command specific arguments
-  parsedArguments.args.s3 // boolean
+  cli.args.s3 // boolean
 }
 ```
 
@@ -237,7 +237,7 @@ Options:
   - Boolean Argument:
 
     - `character` - The single character flag for the argument.
-    - `values` - The number of values the argument accepts. Must be `none`.
+    - `type` - The type of the argument. Must be `boolean`.
     - `description` - The description of the argument. This is used in the help text.
 
 - `additionalArgs` - An object of additional arguments. This can include:

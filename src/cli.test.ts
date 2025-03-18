@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { AdditionalCliArguments, CliArgument, Command, parseCliArguments } from './cli.js'
+import { AdditionalCliArguments, CliArgument, Subcommand, parseCliArguments } from './cli.js'
 import { exit } from './utils.js'
 vi.mock('./utils.js')
 
 interface ParseCliArgumentsTest {
   name: string
   only?: true
-  commands?: Record<string, Command>
+  subcommands?: Record<string, Subcommand>
   options?: Record<string, CliArgument>
   additionalArgs?: AdditionalCliArguments
 
@@ -43,7 +43,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'commands with operands',
-    commands: {
+    subcommands: {
       init: {
         description: 'Initialize the project',
         options: {}
@@ -61,7 +61,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'command partial matching',
-    commands: {
+    subcommands: {
       init: {
         description: 'Initialize the project',
         options: {}
@@ -79,7 +79,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'ambiguous command',
-    commands: {
+    subcommands: {
       init: {
         description: 'Initialize the project',
         options: {}
@@ -96,7 +96,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'unrecognized command',
-    commands: {
+    subcommands: {
       init: {
         description: 'Initialize the project',
         options: {}
@@ -189,7 +189,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   {
     name: 'fail if a boolean option has a value',
     options: {
-      doStuff: { character: 'd', description: 'A foo bar option', values: 'none' },
+      doStuff: { character: 'd', description: 'A foo bar option', type: 'boolean' },
       bazBang: { type: 'string', description: 'A baz', values: 'single' }
     },
     additionalArgs: { args: ['--do-stuff', 'arg1', 'arg2', '--baz-bang', 'arg3'] },
@@ -203,7 +203,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   {
     name: 'if boolean is last put following arguments as operands',
     options: {
-      doStuff: { character: 'd', description: 'A foo bar option', values: 'none' },
+      doStuff: { character: 'd', description: 'A foo bar option', type: 'boolean' },
       bazBang: { type: 'string', description: 'A baz', values: 'single' }
     },
     additionalArgs: {
@@ -249,7 +249,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'has commands but invalid command provided',
-    commands: {
+    subcommands: {
       init: {
         description: 'Initialize the project',
         options: {}
@@ -269,7 +269,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'command with unspecified options',
-    commands: {
+    subcommands: {
       init: {
         description: 'Initialize the project',
         options: {}
@@ -392,9 +392,9 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   {
     name: 'single dash boolean values should be true',
     options: {
-      fooBar: { character: 'f', description: 'A foo bar option', values: 'none' },
-      bazBang: { character: 'b', description: 'baz bang', values: 'none' },
-      beepBoop: { character: 'c', description: 'beep boop', values: 'none' }
+      fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' },
+      bazBang: { character: 'b', description: 'baz bang', type: 'boolean' },
+      beepBoop: { character: 'c', description: 'beep boop', type: 'boolean' }
     },
     additionalArgs: {
       args: ['-f', '-b']
@@ -410,9 +410,9 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   {
     name: 'dash boolean values can be combined',
     options: {
-      fooBar: { character: 'f', description: 'A foo bar option', values: 'none' },
-      bazBang: { character: 'b', description: 'baz bang', values: 'none' },
-      beepBoop: { character: 'c', description: 'beep boop', values: 'none' }
+      fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' },
+      bazBang: { character: 'b', description: 'baz bang', type: 'boolean' },
+      beepBoop: { character: 'c', description: 'beep boop', type: 'boolean' }
     },
     additionalArgs: {
       args: ['-fb', 'hello']
@@ -429,7 +429,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   {
     name: 'single dash booleans cannot have arguments',
     options: {
-      fooBar: { character: 'f', description: 'A foo bar option', values: 'none' },
+      fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' },
       barBaz: { type: 'string', description: 'A bar baz option', values: 'single' }
     },
     additionalArgs: {
@@ -445,7 +445,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   {
     name: 'unrecognized single dash boolean',
     options: {
-      fooBar: { character: 'f', description: 'A foo bar option', values: 'none' }
+      fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' }
     },
     additionalArgs: {
       args: ['-fx', 'arg1']
@@ -460,7 +460,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   {
     name: 'single dash booleans followed by another argument',
     options: {
-      fooBar: { character: 'f', description: 'A foo bar option', values: 'none' },
+      fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' },
       barBaz: { type: 'string', description: 'A bar baz option', values: 'single' }
     },
     additionalArgs: {
@@ -501,7 +501,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   {
     name: 'boolean environment variable always true',
     options: {
-      fooBar: { character: 's', description: 'A foo bar option', values: 'none' }
+      fooBar: { character: 's', description: 'A foo bar option', type: 'boolean' }
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -919,7 +919,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'fail if a sub command is required but not provided',
-    commands: {
+    subcommands: {
       init: {
         description: 'Initialize the project',
         options: {}
@@ -942,7 +942,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   // Subcommand specific arguments
   {
     name: 'should allow subcommand specific arguments and options',
-    commands: {
+    subcommands: {
       init: {
         description: 'Initialize the project',
         options: {
@@ -966,7 +966,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'should throw an error for subcommand specific options when using a different command',
-    commands: {
+    subcommands: {
       init: {
         description: 'Initialize the project',
         options: {
@@ -993,7 +993,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'should get subcommand specific environment variables',
-    commands: {
+    subcommands: {
       init: {
         description: 'Initialize the project',
         options: {
@@ -1032,7 +1032,7 @@ describe('parseCliArguments', () => {
       const fakeExit = vi.mocked(exit)
       fakeExit.mockReset()
 
-      const commands = test.commands || {} //.map((c) => ({ name: c, description: c }))
+      const commands = test.subcommands || {} //.map((c) => ({ name: c, description: c }))
       const result = parseCliArguments('myutil', commands, test.options || {}, test.additionalArgs)
 
       //Then the results should be returned
@@ -1050,9 +1050,9 @@ describe('parseCliArguments', () => {
           expect(result.args).toEqual({})
         }
         if (test.expected.command) {
-          expect(result.command).toEqual(test.expected.command)
+          expect(result.subcommand).toEqual(test.expected.command)
         } else {
-          expect(result.command).toBeUndefined()
+          expect(result.subcommand).toBeUndefined()
         }
         if (test.expected.anyValues != undefined) {
           expect(result.anyValues).toBe(test.expected.anyValues)
