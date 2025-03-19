@@ -556,7 +556,7 @@ export function parseCliArguments<
   return {
     args: parsedArgs,
     operands,
-    subcommand: subcommand as any,
+    subcommand: subcommand as keyof C extends never ? never : any,
     anyValues: args.length > 0,
     printHelp: () => {
       printHelpContents(command, subcommands, cliOptions, additionalArgs, subcommand)
