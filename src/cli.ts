@@ -189,24 +189,47 @@ export interface AdditionalCliArguments {
 
 export type SelectedSubcommandWithArgs<
   C extends Record<string, Subcommand>,
-  O extends Record<string, CliArgument>
+  O extends Record<string, CliArgument>,
+  A extends AdditionalCliArguments
 > = keyof C extends never
   ? {
-      subcommand: undefined
+      subcommand: never
       args: ParsedArgs<O>
       operands: string[]
       anyValues: boolean
       printHelp: () => void
     }
-  : {
-      [K in keyof C]: {
-        subcommand: K
-        args: ParsedArgs<C[K]['options']> & ParsedArgs<O>
-        operands: string[]
-        anyValues: boolean
-        printHelp: () => void
-      }
-    }[keyof C]
+  : A extends { requireSubcommand: true }
+    ? {
+        [K in keyof C]: {
+          subcommand: K
+          args: ParsedArgs<C[K]['options']> & ParsedArgs<O>
+          operands: string[]
+          anyValues: boolean
+          printHelp: () => void
+        }
+      }[keyof C]
+    :
+        | {
+            subcommand: undefined
+            args: ParsedArgs<O>
+            operands: string[]
+            anyValues: boolean
+            printHelp: () => void
+          }
+        | {
+            [K in keyof C]: {
+              subcommand: K
+              args: ParsedArgs<C[K]['options']> & ParsedArgs<O>
+              operands: string[]
+              anyValues: boolean
+              printHelp: () => void
+            }
+          }[keyof C]
+
+type Only<A, B> = {
+  [K in keyof A]: K extends keyof B ? A[K] : never
+} & Partial<B>
 
 /**
  * Parse CLI Arguments and return the parsed typesafe results.
@@ -219,13 +242,14 @@ export type SelectedSubcommandWithArgs<
  */
 export function parseCliArguments<
   O extends Record<string, CliArgument>,
-  C extends Record<string, Subcommand>
+  C extends Record<string, Subcommand>,
+  A extends AdditionalCliArguments
 >(
   command: string,
   subcommands: C,
   cliOptions: Config<O>,
-  additionalArgs?: AdditionalCliArguments
-): SelectedSubcommandWithArgs<C, O> {
+  additionalArgs?: Only<A, AdditionalCliArguments>
+): SelectedSubcommandWithArgs<C, O, A> {
   const args = additionalArgs?.args ?? process.argv.slice(2)
   const env = additionalArgs?.env ?? process.env
   const parsedArgs: any = {}
@@ -532,7 +556,7 @@ export function parseCliArguments<
   return {
     args: parsedArgs,
     operands,
-    subcommand: subcommand as any,
+    subcommand: subcommand as keyof C extends never ? never : any,
     anyValues: args.length > 0,
     printHelp: () => {
       printHelpContents(command, subcommands, cliOptions, additionalArgs, subcommand)
