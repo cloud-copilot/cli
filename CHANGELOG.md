@@ -1,3 +1,15 @@
+## [0.1.16](https://github.com/cloud-copilot/cli/compare/v0.1.15...v0.1.16) (2025-03-19)
+
+
+### Bug Fixes
+
+* fixing parseCliArguments return statement ([8ae155b](https://github.com/cloud-copilot/cli/commit/8ae155b909ebc1fc425f5408cbaf251237d9bde6))
+
+
+### Features
+
+* Improving type inference for subcommand return property ([6713665](https://github.com/cloud-copilot/cli/commit/67136650dc2f3ba7ae836569e5f8ab76f2f7a452))
+
 ## [0.1.15](https://github.com/cloud-copilot/cli/compare/v0.1.14...v0.1.15) (2025-03-18)
 
 ## [0.1.14](https://github.com/cloud-copilot/cli/compare/v0.1.13...v0.1.14) (2025-03-05)
