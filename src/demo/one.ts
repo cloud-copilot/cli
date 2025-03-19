@@ -46,7 +46,8 @@ const cli = parseCliArguments(
   {
     showHelpIfNoArgs: true,
     version: '1.0.0',
-    expectOperands: false
+    expectOperands: false,
+    requireSubcommand: false
   }
 )
 
