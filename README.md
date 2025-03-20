@@ -125,7 +125,7 @@ String or number arguments can be provided as `--name value` or `--name value1 v
 
 String or number arguments will throw an error if:
 
-- The flag is specified an no values are provided
+- The flag is specified and no values are provided
 - The argument accepts only one value and multiple values are provided
 - The argument is a number and a non-number value is provided
 
@@ -135,13 +135,11 @@ Enum arguments can be provided as `--name value1 value2`. The values must be one
 
 Enum arguments will throw an error if:
 
-- The flag is specified an no values are provided
+- The flag is specified and no values are provided
 - The argument accepts only one value and multiple values are provided
 - Any of the arguments provided are not in the list of allowed values.
 
 If the value is not one of the values provided, an error will be thrown.
-
-If a string or number argument is provided with no values an error will be thrown.
 
 ### Operands
 
