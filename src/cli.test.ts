@@ -155,6 +155,21 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     }
   },
   {
+    name: 'multiple value arguments should default to an empty array',
+    options: {
+      fooBar: { type: 'string', description: 'A foo bar option', values: 'multiple' }
+    },
+    additionalArgs: {
+      args: ['arg2']
+    },
+    expected: {
+      args: {
+        fooBar: []
+      },
+      operands: ['arg2']
+    }
+  },
+  {
     name: 'fail if too many arguments to a single value option',
     options: {
       fooBar: { type: 'string', description: 'A foo bar option', values: 'single' },
