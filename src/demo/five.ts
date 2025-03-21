@@ -34,7 +34,7 @@ async function run() {
         type: 'number',
         values: 'single'
       }
-    } as const,
+    },
     {
       version: '1.0.0'
     }

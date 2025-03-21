@@ -18,7 +18,7 @@ const cli = parseCliArguments(
     type: {
       description: 'Type of the file',
       type: 'enum',
-      validValues: ['json', 'yaml', 'xml'] as const,
+      validValues: ['json', 'yaml', 'xml'],
       values: 'single'
     },
     formats: {
