@@ -1,3 +1,10 @@
+## [0.1.18](https://github.com/cloud-copilot/cli/compare/v0.1.17...v0.1.18) (2025-03-21)
+
+
+### Bug Fixes
+
+* fixing typos in docs ([b6d9c2c](https://github.com/cloud-copilot/cli/commit/b6d9c2c53891b71f2da3747cdf83293e39e999b6))
+
 ## [0.1.17](https://github.com/cloud-copilot/cli/compare/v0.1.16...v0.1.17) (2025-03-21)
 
 
