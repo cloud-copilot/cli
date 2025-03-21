@@ -241,9 +241,9 @@ type Only<A, B> = {
  * @returns the parsed arguments, operands, and subcommand if applicable.
  */
 export function parseCliArguments<
-  O extends Record<string, CliArgument>,
-  C extends Record<string, Subcommand>,
-  A extends AdditionalCliArguments
+  const O extends Record<string, CliArgument>,
+  const C extends Record<string, Subcommand>,
+  const A extends AdditionalCliArguments
 >(
   command: string,
   subcommands: C,
