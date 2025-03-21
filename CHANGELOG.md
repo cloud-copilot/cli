@@ -1,3 +1,10 @@
+## [0.1.17](https://github.com/cloud-copilot/cli/compare/v0.1.16...v0.1.17) (2025-03-21)
+
+
+### Features
+
+* automatically add const to arguments to get strong enum typing ([821115a](https://github.com/cloud-copilot/cli/commit/821115a0e9c28a1e946f922f8222998065f885a7))
+
 ## [0.1.16](https://github.com/cloud-copilot/cli/compare/v0.1.15...v0.1.16) (2025-03-19)
 
 
