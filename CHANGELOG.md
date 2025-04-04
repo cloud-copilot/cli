@@ -1,3 +1,10 @@
+## [0.1.19](https://github.com/cloud-copilot/cli/compare/v0.1.18...v0.1.19) (2025-04-04)
+
+
+### Features
+
+* Added  function to read files within cli packages. ([cd1604f](https://github.com/cloud-copilot/cli/commit/cd1604f20caea4b77ef6533d955db7b85791311f))
+
 ## [0.1.18](https://github.com/cloud-copilot/cli/compare/v0.1.17...v0.1.18) (2025-03-21)
 
 
