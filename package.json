@@ -1,6 +1,6 @@
 {
   "name": "@cloud-copilot/cli",
-  "version": "0.1.23",
+  "version": "0.1.24",
   "description": "A standardized library for CLI building TypeScript CLI applications",
   "repository": {
     "type": "git",
