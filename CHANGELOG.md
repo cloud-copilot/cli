@@ -1,3 +1,10 @@
+## [0.1.30](https://github.com/cloud-copilot/cli/compare/v0.1.29...v0.1.30) (2025-05-25)
+
+
+### Bug Fixes
+
+* Fix argument parsing when one argument is a valid prefix of another argument. ([7d5ffe6](https://github.com/cloud-copilot/cli/commit/7d5ffe60478972981cc3b58f8977460a1501ebb5))
+
 ## [0.1.29](https://github.com/cloud-copilot/cli/compare/v0.1.28...v0.1.29) (2025-05-25)
 
 ## [0.1.28](https://github.com/cloud-copilot/cli/compare/v0.1.27...v0.1.28) (2025-05-24)
