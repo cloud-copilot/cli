@@ -319,6 +319,25 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     }
   },
   {
+    name: 'one option is the beginning of another option',
+    options: {
+      resource: { type: 'string', description: 'the resource', values: 'single' },
+      resourceAccountId: {
+        type: 'string',
+        description: 'the resource account id',
+        values: 'single'
+      }
+    },
+    additionalArgs: {
+      args: ['--resource', 'arg1']
+    },
+    expected: {
+      args: {
+        resource: 'arg1'
+      }
+    }
+  },
+  {
     name: 'ambiguous argument',
     options: {
       fooBar: { type: 'string', description: 'A foo bar option', values: 'single' },
@@ -771,9 +790,6 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     },
     additionalArgs: {
       envPrefix: 'DAVE',
-      env: {
-        DAVE_FOO_BAR: 'BETA CHARLIE'
-      },
       args: ['--bang-baz', 'hello', 'world']
     },
     expected: {
@@ -1054,6 +1070,7 @@ describe('parseCliArguments', () => {
       if (test.expected.exit) {
         expect(fakeExit).toHaveBeenCalledWith(test.expected.exit.code, test.expected.exit.message)
       } else {
+        expect(fakeExit).not.toHaveBeenCalled()
         if (test.expected.operands) {
           expect(result.operands).toEqual(test.expected.operands)
         } else {

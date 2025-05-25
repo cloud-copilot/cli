@@ -413,7 +413,12 @@ export function parseCliArguments<
       if (matchingOptions.length === 1) {
         matchingOption = matchingOptions[0]
       } else if (matchingOptions.length > 1) {
-        exit(2, `Ambiguous argument: ${first}`)
+        //Look for an exact match, it's possible that one option name is the beginning of another
+        const exactMatch = matchingOptions.find((k) => k.toLowerCase() === key)
+        if (!exactMatch) {
+          exit(2, `Ambiguous argument: ${first}`)
+        }
+        matchingOption = exactMatch
       } else {
         exit(2, `Unknown argument: ${first}`)
       }
