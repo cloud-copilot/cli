@@ -1,8 +1,8 @@
-import { parseCliArguments } from '../cli.js'
+import { parseCliArguments } from '../../cli.js'
 
 /*
 
-  npx tsx src/demo/four.ts
+  npx tsx src/demo/archive/four.ts
 
 */
 

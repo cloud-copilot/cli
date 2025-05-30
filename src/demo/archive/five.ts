@@ -1,9 +1,9 @@
-import { parseCliArguments } from '../cli.js'
-import { readStdin } from '../stdin.js'
+import { parseCliArguments } from '../../cli.js'
+import { readStdin } from '../../stdin.js'
 
 /*
 
-  npx tsx src/demo/five.ts
+  npx tsx src/demo/archive/five.ts
 
 */
 
