@@ -1,3 +1,10 @@
+# [0.2.0](https://github.com/cloud-copilot/cli/compare/v0.1.39...v0.2.0) (2025-08-03)
+
+
+### Features
+
+* 0.2.0 ([5bd5f89](https://github.com/cloud-copilot/cli/commit/5bd5f89dde1411703307c3d28a4e0bad4058206a))
+
 ## [0.1.39](https://github.com/cloud-copilot/cli/compare/v0.1.38...v0.1.39) (2025-07-26)
 
 ## [0.1.38](https://github.com/cloud-copilot/cli/compare/v0.1.37...v0.1.38) (2025-07-19)
