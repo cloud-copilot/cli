@@ -252,6 +252,28 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     }
   },
   {
+    name: 'show full option name in error message',
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option',
+        values: 'single'
+      }),
+      bazBang: stringArgument({
+        description: 'A baz',
+        values: 'single'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-b']
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message: 'Validation error for --foo-bar: a value is required'
+      }
+    }
+  },
+  {
     name: 'fail if a single value option is specified multiple times',
     args: {
       fooBar: stringArgument({
@@ -332,7 +354,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Invalid: hello, all options must specified using a --argument'
+        message: 'Invalid: hello, all arguments must specified using a --argument'
       }
     }
   },
@@ -375,7 +397,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Options must be specified using a --argument, arg1 is ambiguous'
+        message: 'Arguments must be specified using a --argument, arg1 is ambiguous'
       }
     }
   },
@@ -567,7 +589,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Boolean option(s) -f should not have values'
+        message: 'Boolean flag(s) -f should not have values'
       }
     }
   },
@@ -623,7 +645,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Unknown option: --version'
+        message: 'Unknown argument: --version'
       }
     }
   },
@@ -830,19 +852,64 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     }
   },
   {
+    name: 'single enum value with default',
+    args: {
+      fooBar: enumArgument({
+        description: 'A foo bar option',
+        validValues: ['alpha', 'beta', 'charlie'],
+        defaultValue: 'alpha'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'charlie']
+    },
+    expected: {
+      args: {
+        fooBar: 'charlie'
+      }
+    }
+  },
+  {
+    name: 'string value with default',
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option',
+        defaultValue: 'hello'
+      })
+    },
+    additionalArgs: {
+      args: []
+    },
+    expected: {
+      args: {
+        fooBar: 'hello'
+      }
+    }
+  },
+  {
+    name: 'string value with default and override',
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option',
+        defaultValue: 'hello'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'goodbye']
+    },
+    expected: {
+      args: {
+        fooBar: 'goodbye'
+      }
+    }
+  },
+  {
     name: 'single enum value invalid value',
     args: {
       fooBar: enumArgument({
         description: 'A foo bar option',
         validValues: ['alpha', 'beta', 'charlie']
       })
-      // { type: 'enum', description: 'A foo bar option', values: '
-      // fooBar: {
-      //   type: 'enum',
-      //   description: 'A foo bar option',
-      //   values: 'single',
-      //   validValues: ['alpha', 'beta', 'charlie']
-      // }
     },
     additionalArgs: {
       args: ['--foo-bar', 'delta']
@@ -890,8 +957,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message:
-          'Validation error for --foo-bar: expects a single values but was set multiple times'
+        message: 'Validation error for --foo-bar: expects a single value but was set multiple times'
       }
     }
   },
@@ -1215,7 +1281,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Unknown option: --foo-bar'
+        message: 'Unknown argument: --foo-bar'
       }
     }
   },
