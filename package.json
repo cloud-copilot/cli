@@ -60,7 +60,7 @@
           "releaseRules": [
             {
               "type": "feat",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "fix",

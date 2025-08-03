@@ -1,59 +1,149 @@
+import { arrayValueArgument } from '../arguments/arrayValueArgument.js'
+import { booleanArgument } from '../arguments/booleanArgument.js'
+import { enumArgument } from '../arguments/enumArgument.js'
+import { enumArrayArgument } from '../arguments/enumArrayArgument.js'
+import { numberArgument, numberArrayArgument } from '../arguments/numberArguments.js'
+import { singleValueArgument } from '../arguments/singleValueArgument.js'
+import { stringArgument, stringArrayArgument } from '../arguments/stringArguments.js'
 import { parseCliArguments } from '../cli.js'
 
-const cli = parseCliArguments(
-  'src/demo/arguments.ts',
-  {},
-  {
-    foo: {
-      type: 'string',
-      values: 'single',
-      description: 'foo it up!'
-    },
-    bar: {
-      type: 'string',
-      values: 'multiple',
-      description: 'bar it up!'
-    },
-    boomBaz: {
-      type: 'number',
-      values: 'multiple',
-      description: 'Bazzy bazzy bazzer baz bat'
-    },
-    color: {
-      type: 'enum',
-      description: 'A color to choose',
-      validValues: ['red', 'green', 'blue'],
-      values: 'single'
-    },
-    amazing: {
-      type: 'boolean',
-      description: 'Make it amazing!',
-      character: 'a'
-    },
-    spectacular: {
-      type: 'boolean',
-      description: 'Make it spectacular!',
-      character: 's'
-    },
-    fantastic: {
-      type: 'boolean',
-      description: 'Make it fantastic!',
-      character: 'f'
-    }
-  },
-  {
-    envPrefix: 'MY_APP'
+// Custom argument type for Dates
+const dateArgument = singleValueArgument<Date>((rawValue) => {
+  const date = new Date(rawValue)
+  if (isNaN(date.getTime())) {
+    return { valid: false, message: 'Invalid date format' }
   }
-)
+  return { valid: true, value: date }
+})
 
-console.log(cli)
+const dateArrayArgument = arrayValueArgument<Date>((rawValue) => {
+  const date = new Date(rawValue)
+  if (isNaN(date.getTime())) {
+    return { valid: false, message: 'Invalid date format' }
+  }
+  return { valid: true, value: date }
+})
 
-const foo: string | undefined = cli.args.foo
-const color: 'red' | 'green' | 'blue' | undefined = cli.args.color
-const amazing: boolean = cli.args.amazing
+const run = async () => {
+  const cli = await parseCliArguments(
+    'src/demo/arguments.ts',
+    {},
+    {
+      stringWithDefault: stringArgument({
+        description: 'A single string argument',
+        defaultValue: 'hello'
+      }),
+      string: stringArgument({
+        description: 'A single string argument without a default'
+      }),
+      stringArrayWithDefault: stringArrayArgument({
+        description: 'An array of strings',
+        defaultValue: ['world']
+      }),
+      stringArray: stringArrayArgument({
+        description: 'An array of strings without a default'
+      }),
+      numWithDefault: numberArgument({
+        description: 'A single number argument',
+        defaultValue: 42
+      }),
+      num: numberArgument({
+        description: 'A single number argument without a default'
+      }),
+      numArrayWithDefault: numberArrayArgument({
+        description: 'An array of numbers',
+        defaultValue: [1, 2, 3]
+      }),
+      numArray: numberArrayArgument({
+        description: 'An array of numbers without a default'
+      }),
+      boolArg: booleanArgument({
+        description: 'A boolean argument',
+        character: 'b'
+      }),
+      enumWithDefault: enumArgument({
+        description: 'An enum argument',
+        validValues: ['enumA', 'enumB', 'enumC'],
+        defaultValue: 'foo'
+      }),
+      enum: enumArgument({
+        description: 'An enum argument',
+        validValues: ['enum1', 'enum2', 'enum3']
+      }),
+      enumArrayWithDefault: enumArrayArgument({
+        description: 'An enum array argument',
+        validValues: ['enumOne', 'enumTwo', 'enumThree'],
+        defaultValue: ['enumZero']
+      }),
+      enumArrayWithEmptyDefault: enumArrayArgument({
+        description: 'An enum array argument',
+        validValues: ['enumAlpha', 'enumBeta', 'enumCharlie'],
+        defaultValue: []
+      }),
+      enumArray: enumArrayArgument({
+        description: 'An enum array argument',
+        validValues: ['enumFoo', 'enumBar']
+      }),
+      dateArg: dateArgument({
+        description: 'A date argument without a default'
+      }),
+      dateArgWithDefault: dateArgument({
+        description: 'A date argument with default',
+        defaultValue: new Date()
+      }),
+      dateArr: dateArrayArgument({
+        description: 'An array of dates without a default'
+      }),
+      dateArrWithDefault: dateArrayArgument({
+        description: 'An array of dates with a default',
+        defaultValue: []
+      }),
+      uniqueArg: stringArgument({
+        description: 'An argument that can be partially matched'
+      }),
+      special: booleanArgument({
+        description: 'Make it special',
+        character: 's'
+      }),
+      fantastic: booleanArgument({
+        description: 'Make it fantastic',
+        character: 'f'
+      }),
+      amazing: booleanArgument({
+        description: 'Make it amazing',
+        character: 'a'
+      })
+    },
+    {
+      envPrefix: 'MY_APP'
+    }
+  )
 
-const badArg = cli.args.badArg //compile error
-const subcommand = cli.subcommand // never
+  console.log(cli)
+
+  cli.args.stringWithDefault // string
+  cli.args.string // string | undefined
+  cli.args.stringArrayWithDefault // string[]
+  cli.args.stringArray // string[] | undefined
+  cli.args.numWithDefault // number
+  cli.args.num // number | undefined
+  cli.args.boolArg // boolean
+  cli.args.numArrayWithDefault // number[]
+  cli.args.numArray // number[] | undefined
+  cli.args.enumWithDefault // 'value1' | 'value2' | 'value3'
+  cli.args.enum // 'value4' | 'value5' | 'value6' | undefined
+  cli.args.enumArrayWithDefault // ('value7' | 'value8' | 'value9' | 'value10')[]
+  cli.args.enumArrayWithEmptyDefault // ('value7' | 'value8' | 'value9')[]
+  cli.args.enumArray // ('value7' | 'value8' | 'value9')[] | undefined
+  cli.args.dateArg // Date | undefined
+  cli.args.dateArgWithDefault // Date
+  cli.args.dateArr // Date[] | undefined
+  cli.args.dateArrWithDefault // Date[]
+
+  const badArg = cli.args.badArg //compile error
+}
+
+run().then(() => {})
 
 /*
 
@@ -61,37 +151,36 @@ const subcommand = cli.subcommand // never
 npx tsx src/demo/arguments.ts --help
 
 //Single value argument
-npx tsx src/demo/arguments.ts --foo
-npx tsx src/demo/arguments.ts --foo hello
-npx tsx src/demo/arguments.ts --foo hello boom bop
+npx tsx src/demo/arguments.ts --string
+npx tsx src/demo/arguments.ts --string hello
+npx tsx src/demo/arguments.ts --string hello boom bop
 
 //Multi value argument
-npx tsx src/demo/arguments.ts --bar a b c
-npx tsx src/demo/arguments.ts --bar a b c d
-npx tsx src/demo/arguments.ts --bar a b -- c d --foo
+npx tsx src/demo/arguments.ts --string-array a b c
+npx tsx src/demo/arguments.ts --string-array a b c d
+npx tsx src/demo/arguments.ts --string-array a b -- c d --foo
 
 //Multiple arguments
-npx tsx src/demo/arguments.ts --foo a --bar a b -- c d
+npx tsx src/demo/arguments.ts --string a --string-array a b -- c d
 
 // Enum
-npx tsx src/demo/arguments.ts --color red
-npx tsx src/demo/arguments.ts --color abc
+npx tsx src/demo/arguments.ts --enum enum1
+npx tsx src/demo/arguments.ts --enum enum2
 echo $?
 
 // Environment variables
-MY_APP_COLOR=green npx tsx src/demo/arguments.ts
-MY_APP_COLOR=green npx tsx src/demo/arguments.ts --color red
-MY_APP_COLOR=orange npx tsx src/demo/arguments.ts --color red
+MY_APP_ENUM=enum1 npx tsx src/demo/arguments.ts
+MY_APP_ENUM=enum2 npx tsx src/demo/arguments.ts --color enum1
+MY_APP_ENUM=enum3 npx tsx src/demo/arguments.ts --color enum1
 
 // Ambiguous argument
-npx tsx src/demo/arguments.ts --b abc
+npx tsx src/demo/arguments.ts --d abc
 
 // Partial matching
-npx tsx src/demo/arguments.ts --ba abc
+npx tsx src/demo/arguments.ts --u abc
 
 //Booleans
-npx tsx src/demo/arguments.ts --ama
-npx tsx src/demo/arguments.ts --a
+npx tsx src/demo/arguments.ts --amaz
 npx tsx src/demo/arguments.ts -a -s -f
 npx tsx src/demo/arguments.ts -asf
 

@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { AdditionalCliArguments, CliArgument, Subcommand, parseCliArguments } from './cli.js'
+import { Argument } from './arguments/argument.js'
+import { booleanArgument } from './arguments/booleanArgument.js'
+import { enumArgument } from './arguments/enumArgument.js'
+import { enumArrayArgument } from './arguments/enumArrayArgument.js'
+import { mapArgument } from './arguments/mapArgument.js'
+import { numberArgument, numberArrayArgument } from './arguments/numberArguments.js'
+import { stringArgument, stringArrayArgument } from './arguments/stringArguments.js'
+import { AdditionalCliOptions, Subcommand, parseCliArguments } from './cli.js'
 import { exit } from './utils.js'
 vi.mock('./utils.js')
 
@@ -7,15 +14,19 @@ interface ParseCliArgumentsTest {
   name: string
   only?: true
   subcommands?: Record<string, Subcommand>
-  options?: Record<string, CliArgument>
-  additionalArgs?: AdditionalCliArguments
+  args?: Record<string, Argument<any>>
+  additionalArgs?: AdditionalCliOptions
 
   expected: {
     operands?: string[]
-    args?: Record<string, string | string[] | number | number[] | boolean>
+    args?: Record<
+      string,
+      string | string[] | number | number[] | boolean | Record<string, string[]>
+    >
     command?: string
     exit?: { code: number; message?: string }
     anyValues?: boolean
+    console?: string[]
   }
 }
 
@@ -46,11 +57,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     subcommands: {
       init: {
         description: 'Initialize the project',
-        options: {}
+        arguments: {}
       },
       download: {
         description: 'Download a file',
-        options: {}
+        arguments: {}
       }
     },
     additionalArgs: { args: ['init', 'arg1', 'arg2'] },
@@ -64,11 +75,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     subcommands: {
       init: {
         description: 'Initialize the project',
-        options: {}
+        arguments: {}
       },
       download: {
         description: 'Download a file',
-        options: {}
+        arguments: {}
       }
     },
     additionalArgs: { args: ['i', 'arg1', 'arg2'] },
@@ -82,11 +93,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     subcommands: {
       init: {
         description: 'Initialize the project',
-        options: {}
+        arguments: {}
       },
       inspect: {
         description: 'Download a file',
-        options: {}
+        arguments: {}
       }
     },
     additionalArgs: { args: ['i', 'arg1', 'arg2'] },
@@ -99,11 +110,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     subcommands: {
       init: {
         description: 'Initialize the project',
-        options: {}
+        arguments: {}
       },
       download: {
         description: 'Download a file',
-        options: {}
+        arguments: {}
       }
     },
     additionalArgs: { args: ['foo', 'arg1', 'arg2'] },
@@ -113,8 +124,10 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'convert camelcase to kebabcase',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
     },
     additionalArgs: {
       args: ['--foo-bar', 'arg1']
@@ -127,8 +140,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'convert camelcase to kebabcase with multiple args',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'multiple' }
+    args: {
+      fooBar: stringArrayArgument({
+        description: 'A foo bar option'
+      })
+      // { type: 'string', description: 'A foo bar option', values: 'multiple' }
     },
     additionalArgs: {
       args: ['--foo-bar', 'arg1', 'arg2']
@@ -141,8 +157,10 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'make extra arguments operands',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
     },
     additionalArgs: {
       args: ['--foo-bar', 'arg1', 'arg2']
@@ -155,9 +173,12 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     }
   },
   {
-    name: 'multiple value arguments should default to an empty array',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'multiple' }
+    name: 'multiple value arguments should default to an empty array if specified',
+    args: {
+      fooBar: stringArrayArgument({
+        description: 'A foo bar option',
+        defaultValue: []
+      })
     },
     additionalArgs: {
       args: ['arg2']
@@ -170,10 +191,33 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     }
   },
   {
+    name: 'multiple value arguments should append if defined multiple times',
+    args: {
+      fooBar: stringArrayArgument({
+        description: 'A foo bar option',
+        defaultValue: []
+      })
+      // fooBar: { type: 'string', description: 'A foo bar option', values: 'multiple', defaultValue: [] }
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'arg1', '--foo-bar', 'arg2', 'arg3']
+    },
+    expected: {
+      args: {
+        fooBar: ['arg1', 'arg2', 'arg3']
+      }
+      // operands: ['arg3']
+    }
+  },
+  {
     name: 'fail if too many arguments to a single value option',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' },
-      bazBang: { type: 'string', description: 'A baz', values: 'single' }
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      }),
+      bazBang: stringArgument({
+        description: 'A baz'
+      })
     },
     additionalArgs: {
       args: ['--foo-bar', 'arg1', 'arg2', '--baz-bang', 'arg3']
@@ -181,15 +225,21 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Option --foo-bar expects a single value, but received multiple: arg1, arg2'
+        message: 'Validation error for --foo-bar: expects a single value but received arg1, arg2'
       }
     }
   },
   {
     name: 'fail if no arguments to a single value option',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' },
-      bazBang: { type: 'string', description: 'A baz', values: 'single' }
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option',
+        values: 'single'
+      }),
+      bazBang: stringArgument({
+        description: 'A baz',
+        values: 'single'
+      })
     },
     additionalArgs: {
       args: ['--foo-bar']
@@ -197,29 +247,47 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Option --foo-bar expects a value, but received none'
+        message: 'Validation error for --foo-bar: a value is required'
+      }
+    }
+  },
+  {
+    name: 'fail if a single value option is specified multiple times',
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'arg1', '--foo-bar', 'arg2']
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message:
+          'Validation error for --foo-bar: expects a single values but was set multiple times'
       }
     }
   },
   {
     name: 'fail if a boolean option has a value',
-    options: {
-      doStuff: { character: 'd', description: 'A foo bar option', type: 'boolean' },
-      bazBang: { type: 'string', description: 'A baz', values: 'single' }
+    args: {
+      doStuff: booleanArgument({ description: 'A foo bar option', character: 'd' }),
+      bazBang: stringArgument({ description: 'A baz' })
     },
     additionalArgs: { args: ['--do-stuff', 'arg1', 'arg2', '--baz-bang', 'arg3'] },
     expected: {
       exit: {
         code: 2,
-        message: 'Boolean option --do-stuff does not accept values'
+        message: 'Validation error for --do-stuff: does not accept values but received arg1, arg2'
       }
     }
   },
   {
     name: 'if boolean is last put following arguments as operands',
-    options: {
-      doStuff: { character: 'd', description: 'A foo bar option', type: 'boolean' },
-      bazBang: { type: 'string', description: 'A baz', values: 'single' }
+    args: {
+      doStuff: booleanArgument({ description: 'A foo bar option', character: 'd' }),
+      bazBang: stringArgument({ description: 'A baz' })
     },
     additionalArgs: {
       args: ['--baz-bang', 'arg3', '--do-stuff', 'arg1', 'arg2']
@@ -234,8 +302,12 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'fail if multi value option has no values',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'multiple' }
+    args: {
+      fooBar: stringArrayArgument({
+        description: 'A foo bar option',
+        defaultValue: []
+      })
+      // fooBar: { type: 'string', description: 'A foo bar option', values: 'multiple' }
     },
     additionalArgs: {
       args: ['--foo-bar']
@@ -243,14 +315,16 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Option --foo-bar expects at least one value, but received none'
+        message: 'Validation error for --foo-bar: at least one value is required'
       }
     }
   },
   {
     name: 'no command invalid command when followed by an option',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
     },
     additionalArgs: {
       args: ['hello', '--foo-bar', 'arg1']
@@ -267,11 +341,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     subcommands: {
       init: {
         description: 'Initialize the project',
-        options: {}
+        arguments: {}
       },
       download: {
         description: 'Download a file',
-        options: {}
+        arguments: {}
       }
     },
     additionalArgs: { args: ['foo', '--foo-bar', 'arg1'] },
@@ -287,11 +361,13 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     subcommands: {
       init: {
         description: 'Initialize the project',
-        options: {}
+        arguments: {}
       }
     },
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
     },
     additionalArgs: {
       args: ['init', 'arg1', '--foo-bar', 'arg2']
@@ -305,9 +381,13 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'argument partial matching',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' },
-      barFoo: { type: 'string', description: 'A bar foo option', values: 'single' }
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      }),
+      barFoo: stringArgument({
+        description: 'A bar foo option'
+      })
     },
     additionalArgs: {
       args: ['--f', 'arg1']
@@ -320,13 +400,13 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'one option is the beginning of another option',
-    options: {
-      resource: { type: 'string', description: 'the resource', values: 'single' },
-      resourceAccountId: {
-        type: 'string',
-        description: 'the resource account id',
-        values: 'single'
-      }
+    args: {
+      resource: stringArgument({
+        description: 'the resource'
+      }),
+      resourceAccountId: stringArgument({
+        description: 'the resource account id'
+      })
     },
     additionalArgs: {
       args: ['--resource', 'arg1']
@@ -339,9 +419,13 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'ambiguous argument',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' },
-      fooBaz: { type: 'string', description: 'A bar foo option', values: 'single' }
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      }),
+      fooBaz: stringArgument({
+        description: 'A foo baz option'
+      })
     },
     additionalArgs: {
       args: ['--f', 'arg1']
@@ -355,8 +439,8 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'single number value is parsed',
-    options: {
-      fooBar: { type: 'number', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: numberArgument({ description: 'A foo bar number' })
     },
     additionalArgs: {
       args: ['--foo-bar', '123']
@@ -369,8 +453,9 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'invalid number value',
-    options: {
-      fooBar: { type: 'number', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: numberArgument({ description: 'A foo bar number' })
+      // fooBar: { type: 'number', description: 'A foo bar option', values: 'single' }
     },
     additionalArgs: {
       args: ['--foo-bar', 'arg1']
@@ -378,14 +463,17 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Option --foo-bar expects a valid number, but received: arg1'
+        message: 'Validation error for --foo-bar: expects a number but received arg1'
       }
     }
   },
   {
     name: 'multiple number values are parsed',
-    options: {
-      fooBar: { type: 'number', description: 'A foo bar option', values: 'multiple' }
+    args: {
+      fooBar: numberArrayArgument({
+        description: 'A foo bar number array'
+      })
+      // fooBar: { type: 'number', description: 'A foo bar option', values: 'multiple' }
     },
     additionalArgs: {
       args: ['--foo-bar', '123', '456']
@@ -398,8 +486,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'some number values are invalid',
-    options: {
-      fooBar: { type: 'number', description: 'A foo bar option', values: 'multiple' }
+    args: {
+      fooBar: numberArrayArgument({
+        description: 'A foo bar number array'
+      })
+      // fooBar: { type: 'number', description: 'A foo bar option', values: 'multiple' }
     },
     additionalArgs: {
       args: ['--foo-bar', '123', 'arg1']
@@ -407,14 +498,16 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Option --foo-bar expects a valid number, but received: arg1'
+        message: 'Validation error for --foo-bar: expects a number but received arg1'
       }
     }
   },
   {
     name: 'all values after -- are operands',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
     },
     additionalArgs: {
       args: ['--', 'arg1', 'arg2', '--foo-bar', 'arg3']
@@ -425,10 +518,10 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'single dash boolean values should be true',
-    options: {
-      fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' },
-      bazBang: { character: 'b', description: 'baz bang', type: 'boolean' },
-      beepBoop: { character: 'c', description: 'beep boop', type: 'boolean' }
+    args: {
+      fooBar: booleanArgument({ character: 'f', description: 'A foo bar option' }),
+      bazBang: booleanArgument({ character: 'b', description: 'baz bang' }),
+      beepBoop: booleanArgument({ character: 'c', description: 'beep boop' })
     },
     additionalArgs: {
       args: ['-f', '-b']
@@ -443,10 +536,10 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'dash boolean values can be combined',
-    options: {
-      fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' },
-      bazBang: { character: 'b', description: 'baz bang', type: 'boolean' },
-      beepBoop: { character: 'c', description: 'beep boop', type: 'boolean' }
+    args: {
+      fooBar: booleanArgument({ character: 'f', description: 'A foo bar option' }),
+      bazBang: booleanArgument({ character: 'b', description: 'baz bang' }),
+      beepBoop: booleanArgument({ character: 'c', description: 'beep boop' })
     },
     additionalArgs: {
       args: ['-fb', 'hello']
@@ -462,9 +555,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'single dash booleans cannot have arguments',
-    options: {
-      fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' },
-      barBaz: { type: 'string', description: 'A bar baz option', values: 'single' }
+    args: {
+      fooBar: booleanArgument({ character: 'f', description: 'A foo bar option' }),
+      bazBar: stringArgument({ description: 'A baz bar option' })
+      // fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' },
+      // barBaz: { type: 'string', description: 'A bar baz option', values: 'single' }
     },
     additionalArgs: {
       args: ['-f', 'arg1', '--barBaz']
@@ -478,8 +573,8 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'unrecognized single dash boolean',
-    options: {
-      fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' }
+    args: {
+      fooBar: booleanArgument({ character: 'f', description: 'A foo bar option' })
     },
     additionalArgs: {
       args: ['-fx', 'arg1']
@@ -493,9 +588,9 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'single dash booleans followed by another argument',
-    options: {
-      fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' },
-      barBaz: { type: 'string', description: 'A bar baz option', values: 'single' }
+    args: {
+      fooBar: booleanArgument({ character: 'f', description: 'A foo bar option' }),
+      barBaz: stringArgument({ description: 'A bar baz option' })
     },
     additionalArgs: {
       args: ['-f', '--barBaz', 'arg1']
@@ -515,9 +610,9 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     },
     expected: {
       exit: {
-        code: 0,
-        message: '1.0.0'
-      }
+        code: 0
+      },
+      console: ['1.0.0']
     }
   },
   {
@@ -534,8 +629,8 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'boolean environment variable always true',
-    options: {
-      fooBar: { character: 's', description: 'A foo bar option', type: 'boolean' }
+    args: {
+      fooBar: booleanArgument({ character: 's', description: 'A foo bar option' })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -552,8 +647,8 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'single value environment variable',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: stringArgument({ description: 'A foo bar option' })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -570,8 +665,8 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'single value number environment variable',
-    options: {
-      fooBar: { type: 'number', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: numberArgument({ description: 'A foo bar option' })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -587,8 +682,8 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'single value number invalid environment variable',
-    options: {
-      fooBar: { type: 'number', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: numberArgument({ description: 'A foo bar option' })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -600,14 +695,16 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Environment DAVE_FOO_BAR expects a valid number, but received: hello'
+        message: 'Invalid value for environment DAVE_FOO_BAR: expects a number but received hello'
       }
     }
   },
   {
     name: 'multiple value string environment variable',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'multiple' }
+    args: {
+      fooBar: stringArrayArgument({
+        description: 'A foo bar option'
+      })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -623,8 +720,10 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'multiple value number environment variable',
-    options: {
-      fooBar: { type: 'number', description: 'A foo bar option', values: 'multiple' }
+    args: {
+      fooBar: numberArrayArgument({
+        description: 'A foo bar option'
+      })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -640,8 +739,10 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'multiple value number invalid environment variable',
-    options: {
-      fooBar: { type: 'number', description: 'A foo bar option', values: 'multiple' }
+    args: {
+      fooBar: numberArrayArgument({
+        description: 'A foo bar option'
+      })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -652,14 +753,16 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Environment DAVE_FOO_BAR expects a valid number, but received: hello'
+        message: 'Invalid values for environment DAVE_FOO_BAR: expects a number but received hello'
       }
     }
   },
   {
     name: 'should ignore environment variables with the wrong prefix',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -673,8 +776,10 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'command line arguments should take precedence over environment variables',
-    options: {
-      fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
     },
     additionalArgs: {
       args: ['--foo-bar', 'world'],
@@ -691,13 +796,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'single enum value no value provided',
-    options: {
-      fooBar: {
-        type: 'enum',
+    args: {
+      fooBar: enumArgument({
         description: 'A foo bar option',
-        values: 'single',
         validValues: ['alpha', 'beta', 'charlie']
-      }
+      })
     },
     additionalArgs: {
       args: ['--foo-bar']
@@ -705,19 +808,17 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Option --foo-bar expects a value, but received none'
+        message: 'Validation error for --foo-bar: a value is required'
       }
     }
   },
   {
     name: 'single enum value is parsed',
-    options: {
-      fooBar: {
-        type: 'enum',
+    args: {
+      fooBar: enumArgument({
         description: 'A foo bar option',
-        values: 'single',
         validValues: ['alpha', 'beta', 'charlie']
-      }
+      })
     },
     additionalArgs: {
       args: ['--foo-bar', 'BETA']
@@ -730,13 +831,18 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'single enum value invalid value',
-    options: {
-      fooBar: {
-        type: 'enum',
+    args: {
+      fooBar: enumArgument({
         description: 'A foo bar option',
-        values: 'single',
         validValues: ['alpha', 'beta', 'charlie']
-      }
+      })
+      // { type: 'enum', description: 'A foo bar option', values: '
+      // fooBar: {
+      //   type: 'enum',
+      //   description: 'A foo bar option',
+      //   values: 'single',
+      //   validValues: ['alpha', 'beta', 'charlie']
+      // }
     },
     additionalArgs: {
       args: ['--foo-bar', 'delta']
@@ -744,24 +850,21 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Option --foo-bar allows only the following values: alpha, beta, charlie'
+        message:
+          'Validation error for --foo-bar: delta is not one of the allowed values: alpha, beta, charlie'
       }
     }
   },
   {
     name: 'single enum option with multiple values',
-    options: {
-      fooBar: {
-        type: 'enum',
+    args: {
+      fooBar: enumArgument({
         description: 'A foo bar option',
-        values: 'single',
         validValues: ['alpha', 'beta', 'charlie']
-      },
-      bangBaz: {
-        type: 'string',
-        description: 'bang baz',
-        values: 'single'
-      }
+      }),
+      bangBaz: stringArgument({
+        description: 'bang baz'
+      })
     },
     additionalArgs: {
       args: ['--foo-bar', 'BETA', 'charlie', '--bang-baz', 'hello']
@@ -769,45 +872,58 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Option --foo-bar expects a single value, but received multiple: BETA, charlie'
+        message: 'Validation error for --foo-bar: expects a single value but received BETA, charlie'
+      }
+    }
+  },
+  {
+    name: 'single enum specified multiple times',
+    args: {
+      fooBar: enumArgument({
+        description: 'A foo bar option',
+        validValues: ['alpha', 'beta', 'charlie']
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'beta', '--foo-bar', 'charlie']
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message:
+          'Validation error for --foo-bar: expects a single values but was set multiple times'
       }
     }
   },
   {
     name: 'single enum environment variable with multiple values at end',
-    options: {
-      fooBar: {
-        type: 'enum',
+    args: {
+      fooBar: enumArgument({
         description: 'A foo bar option',
-        values: 'single',
         validValues: ['alpha', 'beta', 'charlie']
-      },
-      bangBaz: {
-        type: 'string',
-        description: 'bang baz',
-        values: 'single'
-      }
+      }),
+      bangBaz: stringArgument({
+        description: 'bang baz'
+      })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
-      args: ['--bang-baz', 'hello', 'world']
+      args: ['--foo-bar', 'alpha', 'world']
     },
     expected: {
       args: {
-        bangBaz: 'hello'
+        fooBar: 'alpha'
       },
       operands: ['world']
     }
   },
   {
     name: 'multiple enum values no values provided',
-    options: {
-      fooBar: {
-        type: 'enum',
+    args: {
+      fooBar: enumArrayArgument({
         description: 'A foo bar option',
-        values: 'multiple',
         validValues: ['alpha', 'beta', 'charlie']
-      }
+      })
     },
     additionalArgs: {
       args: ['--foo-bar']
@@ -815,19 +931,17 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Option --foo-bar expects at least one value, but received none'
+        message: 'Validation error for --foo-bar: At least one value is required'
       }
     }
   },
   {
-    name: 'multiple enum values are parsed',
-    options: {
-      fooBar: {
-        type: 'enum',
+    name: 'array enum values are parsed',
+    args: {
+      fooBar: enumArrayArgument({
         description: 'A foo bar option',
-        values: 'multiple',
         validValues: ['alpha', 'beta', 'charlie']
-      }
+      })
     },
     additionalArgs: {
       args: ['--foo-bar', 'BETA', 'charlie']
@@ -839,14 +953,29 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     }
   },
   {
-    name: 'multiple enum values some invalid',
-    options: {
-      fooBar: {
-        type: 'enum',
+    name: 'array enum values specified multiple times',
+    args: {
+      fooBar: enumArrayArgument({
         description: 'A foo bar option',
-        values: 'multiple',
         validValues: ['alpha', 'beta', 'charlie']
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'beta', 'alpha', '--foo-bar', 'charlie']
+    },
+    expected: {
+      args: {
+        fooBar: ['beta', 'alpha', 'charlie']
       }
+    }
+  },
+  {
+    name: 'multiple enum values some invalid',
+    args: {
+      fooBar: enumArrayArgument({
+        description: 'A foo bar option',
+        validValues: ['alpha', 'beta', 'charlie']
+      })
     },
     additionalArgs: {
       args: ['--foo-bar', 'BETA', 'charlie', 'Echo']
@@ -854,19 +983,18 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Option --foo-bar allows only the following values: alpha, beta, charlie'
+        message:
+          'Validation error for --foo-bar: Echo is not one of the allowed values: alpha, beta, charlie'
       }
     }
   },
   {
     name: 'enum environment variable, single value, valid',
-    options: {
-      fooBar: {
-        type: 'enum',
+    args: {
+      fooBar: enumArgument({
         description: 'A foo bar option',
-        values: 'single',
         validValues: ['alpha', 'beta', 'charlie']
-      }
+      })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -882,13 +1010,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'enum environment variable, single value, invalid',
-    options: {
-      fooBar: {
-        type: 'enum',
+    args: {
+      fooBar: enumArgument({
         description: 'A foo bar option',
-        values: 'single',
         validValues: ['alpha', 'beta', 'charlie']
-      }
+      })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -899,19 +1025,18 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Environment DAVE_FOO_BAR allows only the following values: alpha, beta, charlie'
+        message:
+          'Invalid value for environment DAVE_FOO_BAR: delta is not one of the allowed values: alpha, beta, charlie'
       }
     }
   },
   {
     name: 'enum environment variable, multiple value, valid',
-    options: {
-      fooBar: {
-        type: 'enum',
+    args: {
+      fooBar: enumArrayArgument({
         description: 'A foo bar option',
-        values: 'multiple',
         validValues: ['alpha', 'beta', 'charlie']
-      }
+      })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -927,13 +1052,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
   },
   {
     name: 'enum environment variable, multiple value, some invalid',
-    options: {
-      fooBar: {
-        type: 'enum',
+    args: {
+      fooBar: enumArrayArgument({
         description: 'A foo bar option',
-        values: 'multiple',
         validValues: ['alpha', 'beta', 'charlie']
-      }
+      })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -944,7 +1067,79 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Environment DAVE_FOO_BAR allows only the following values: alpha, beta, charlie'
+        message:
+          'Invalid values for environment DAVE_FOO_BAR: delta is not one of the allowed values: alpha, beta, charlie'
+      }
+    }
+  },
+  {
+    name: 'map argument',
+    args: {
+      fooBar: mapArgument({
+        description: 'A foo bar map option'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'key1', 'value1', 'value2', '--foo-bar', 'key2', 'value3']
+    },
+    expected: {
+      args: {
+        fooBar: {
+          key1: ['value1', 'value2'],
+          key2: ['value3']
+        }
+      }
+    }
+  },
+  {
+    name: 'map argument without a value',
+    args: {
+      fooBar: mapArgument({
+        description: 'A foo bar map option'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'key1', '--foo-bar', 'key2', 'value3']
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message: 'Validation error for --foo-bar: key1 requires at least one value'
+      }
+    }
+  },
+  {
+    name: 'map argument without a key',
+    args: {
+      fooBar: mapArgument({
+        description: 'A foo bar map option'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar']
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message:
+          'Validation error for --foo-bar: a key is required and at least one value is required'
+      }
+    }
+  },
+  {
+    name: 'map argument set same keys multiple times',
+    args: {
+      fooBar: mapArgument({
+        description: 'A foo bar map option'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'key1', 'value1', '--foo-bar', 'key1', 'value2']
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message: 'Validation error for --foo-bar: key1 is set multiple times'
       }
     }
   },
@@ -953,11 +1148,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     subcommands: {
       init: {
         description: 'Initialize the project',
-        options: {}
+        arguments: {}
       },
       download: {
         description: 'Download a file',
-        options: {}
+        arguments: {}
       }
     },
     additionalArgs: {
@@ -976,13 +1171,13 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     subcommands: {
       init: {
         description: 'Initialize the project',
-        options: {
-          fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
+        arguments: {
+          fooBar: stringArgument({ description: 'A foo bar option' })
         }
       }
     },
-    options: {
-      bazBang: { type: 'string', description: 'baz bang', values: 'single' }
+    args: {
+      bazBang: stringArgument({ description: 'A baz bing option' })
     },
     additionalArgs: {
       args: ['init', '--foo-bar', 'arg1', '--baz-bang', 'arg2']
@@ -1000,17 +1195,19 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     subcommands: {
       init: {
         description: 'Initialize the project',
-        options: {
-          fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
+        arguments: {
+          fooBar: stringArgument({ description: 'A foo bar option' })
+          // fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
         }
       },
       download: {
         description: 'Initialize the project',
-        options: {}
+        arguments: {}
       }
     },
-    options: {
-      bazBang: { type: 'string', description: 'baz bang', values: 'single' }
+    args: {
+      bazBang: stringArgument({ description: 'baz bang', values: 'single' })
+      // bazBang: { type: 'string', description: 'baz bang', values: 'single' }
     },
     additionalArgs: {
       args: ['download', '--foo-bar', 'arg1', '--baz-bang', 'arg2']
@@ -1027,13 +1224,15 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     subcommands: {
       init: {
         description: 'Initialize the project',
-        options: {
-          fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
+        arguments: {
+          fooBar: stringArgument({ description: 'A foo bar option' })
+          // fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
         }
       }
     },
-    options: {
-      bazBang: { type: 'string', description: 'baz bang', values: 'single' }
+    args: {
+      bazBang: stringArgument({ description: 'baz bang', values: 'single' })
+      // bazBang: { type: 'string', description: 'baz bang', values: 'single' }
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -1050,23 +1249,49 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
         bazBang: 'arg2'
       }
     }
+  },
+  {
+    name: 'should exit if --help is provided',
+    additionalArgs: {
+      args: ['--help']
+    },
+    expected: {
+      exit: {
+        code: 0 // message is not checked
+      }
+    }
   }
 ]
+
+class FakeLogger {
+  logs: string[] = []
+  log(message: string) {
+    this.logs.push(message)
+  }
+}
 
 describe('parseCliArguments', () => {
   for (const test of parseCliArgumentsTests) {
     const func = test.only ? it.only : it
-    func(test.name, () => {
+    func(test.name, async () => {
       //Given a list of arguments
       //When the arguments are parsed
 
       const fakeExit = vi.mocked(exit)
       fakeExit.mockReset()
 
+      const inMemoryLogger = new FakeLogger()
+
       const commands = test.subcommands || {} //.map((c) => ({ name: c, description: c }))
-      const result = parseCliArguments('myutil', commands, test.options || {}, test.additionalArgs)
+      const result = await parseCliArguments('myutil', commands, test.args || {}, {
+        ...test.additionalArgs,
+        consoleLogger: inMemoryLogger
+      })
 
       //Then the results should be returned
+      if (test.expected.console) {
+        expect(inMemoryLogger.logs).toEqual(test.expected.console)
+      }
       if (test.expected.exit) {
         expect(fakeExit).toHaveBeenCalledWith(test.expected.exit.code, test.expected.exit.message)
       } else {
@@ -1092,17 +1317,4 @@ describe('parseCliArguments', () => {
       }
     })
   }
-
-  it('should throw an error if an unknown option type is provided', () => {
-    expect(() =>
-      parseCliArguments(
-        'myutil',
-        {},
-        {
-          fooBar: { type: 'string', description: 'A foo bar option', values: 'a bunch' } as any
-        },
-        { version: '1.0.0', args: ['--foo-bar', 'arg1'] }
-      )
-    ).toThrow('Unrecognized option values a bunch')
-  })
 })
