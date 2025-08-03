@@ -17,7 +17,7 @@ export function enumArrayArgument<
   return {
     description:
       options.description +
-      `. One or more values required, valid values are: ${options.validValues.join(', ')})`,
+      `. One or more values required, valid values are: ${options.validValues.join(', ')}`,
     validateValues: async (
       currentValue: EnumArrayType<O>[] | undefined,
       values: string[]
