@@ -67,7 +67,7 @@ const cli = await parseCliArguments(
 
         // Read the package.json file in your project root
         const contents = await relativeFileReader.readFile(['package.json'])
-        const version = return JSON.parse(contents).version
+        return JSON.parse(contents).version
       }
     }
   }
