@@ -337,7 +337,7 @@ export async function parseCliArguments<
       }
     } else if (first.startsWith('-')) {
       if (rest.length > 0 && !isLast) {
-        exit(2, `Boolean flags(s) ${first} should not have values`)
+        exit(2, `Boolean flag(s) ${first} should not have values`)
         return {} as any
       } else if (isLast) {
         operands.push(...rest)
