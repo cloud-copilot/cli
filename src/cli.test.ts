@@ -354,7 +354,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Invalid: hello, all options must specified using a --argument'
+        message: 'Invalid: hello, all arguments must specified using a --argument'
       }
     }
   },
@@ -397,7 +397,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Options must be specified using a --argument, arg1 is ambiguous'
+        message: 'Arguments must be specified using a --argument, arg1 is ambiguous'
       }
     }
   },
@@ -589,7 +589,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Boolean option(s) -f should not have values'
+        message: 'Boolean flag(s) -f should not have values'
       }
     }
   },
@@ -645,7 +645,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Unknown option: --version'
+        message: 'Unknown argument: --version'
       }
     }
   },
@@ -1281,7 +1281,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Unknown option: --foo-bar'
+        message: 'Unknown argument: --foo-bar'
       }
     }
   },
