@@ -1,3 +1,12 @@
+## [0.2.2](https://github.com/cloud-copilot/cli/compare/v0.2.1...v0.2.2) (2025-08-03)
+
+
+### Bug Fixes
+
+* Correct tests to match new error messages ([83675cb](https://github.com/cloud-copilot/cli/commit/83675cbd483718dd26135fcfe7da71e46c708948))
+* Fix argument defaults for single value arguments ([47a51db](https://github.com/cloud-copilot/cli/commit/47a51db0ca4e885ee9b50a5a415bea2509f473d8))
+* typo ([08660e1](https://github.com/cloud-copilot/cli/commit/08660e16217c334041818c311652dbeb4da29952))
+
 ## [0.2.1](https://github.com/cloud-copilot/cli/compare/v0.2.0...v0.2.1) (2025-08-03)
 
 # [0.2.0](https://github.com/cloud-copilot/cli/compare/v0.1.39...v0.2.0) (2025-08-03)
