@@ -26,7 +26,7 @@ export function enumArgument<
         return { valid: false, message: 'a value is required' }
       }
       if (currentValue != options.defaultValue) {
-        return { valid: false, message: 'expects a single values but was set multiple times' }
+        return { valid: false, message: 'expects a single value but was set multiple times' }
       }
       if (values.length > 1) {
         return {
