@@ -1,13 +1,17 @@
 import { parseCliArguments } from '../cli.js'
-import { readRelativeFile } from '../readRelative.js'
-
-const cli = parseCliArguments('basic.ts', {}, {}, {})
+import { createPackageFileReader } from '../readRelative.js'
 
 const run = async () => {
+  const cli = await parseCliArguments('basic.ts', {}, {}, {})
   // Use import.meta.url or __filename
   const start = __filename
   // const start = import.meta.url
-  const relativeContents = await readRelativeFile(start, 2, ['src', 'demo', 'README.md'])
+
+  //Create a reader that can read files relative to the root of your project
+  const relativeFileReader = createPackageFileReader(start, 2)
+
+  // Read the README.md file in the src/demo directory
+  const relativeContents = await relativeFileReader.readFile(['src', 'demo', 'README.md'])
   console.log(relativeContents)
 }
 

@@ -1,130 +1,22 @@
+import { Argument } from './arguments/argument.js'
 import { exit } from './utils.js'
 
-/**
- * A boolean argument that has no values.
- */
-export type BooleanArgument = {
-  /**
-   * The single character flag for the argument.
-   */
-  character: string
-
-  /**
-   * The type of the argument.
-   */
-  type: 'boolean'
-
-  /**
-   * The description of the argument.
-   */
-  description: string
+type ParsedArguments<T extends Record<string, Argument<any>>> = {
+  [K in keyof T as K]: T[K] extends Argument<infer V> ? V : never
 }
 
 /**
- * A standard argument that has one or more values.
+ * A subcommand that can be used in the CLI.
  */
-export type StandardArgument = {
-  /**
-   * Whether the argument accepts single or multiple values.
-   */
-  values: 'single' | 'multiple'
-
-  /**
-   * The type of the values accepted.
-   */
-  type: 'string' | 'number'
-
-  /**
-   * The description of the argument.
-   */
-  description: string
-}
-
-export type EnumArgument<ValidValues extends readonly string[]> = {
-  /**
-   * Whether the argument accepts single or multiple values.
-   */
-  values: 'single' | 'multiple'
-
-  /**
-   * Must be 'enum' for an enum argument.
-   */
-  type: 'enum'
-
-  /**
-   * The valid values for the argument.
-   */
-  validValues: ValidValues
-
-  /**
-   * The description of the argument.
-   */
-  description: string
-}
-
-/**
- * A CLI argument that can be accepted for a command.
- */
-export type CliArgument = BooleanArgument | StandardArgument | EnumArgument<readonly string[]>
-
 export type Subcommand = {
   description: string
-  options: Record<string, CliArgument>
-}
-
-function isBooleanOption(option: CliArgument): option is BooleanArgument {
-  return (option as BooleanArgument).type === 'boolean'
-}
-
-function isEnumOption(option: CliArgument): option is EnumArgument<readonly string[]> {
-  return (option as any).type === 'enum'
-}
-
-export type OptionConfig = {
-  type: 'string' | 'number' | 'boolean'
-  values: 'single' | 'multiple'
-  description: string
-  character?: string
+  arguments: Record<string, Argument<any>>
 }
 
 /**
  * A map of CLI argument keys to their configuration.
  */
-export type Config<T extends Record<string, CliArgument>> = T
-
-/**
- * Create a type safe configuration for CLI arguments.
- *
- * @param config the configuration for the CLI arguments.
- * @returns the configuration object.
- */
-export function createConfig<T extends Record<string, CliArgument>>(config: T): T {
-  return config
-}
-
-type ParsedArgs<T extends Record<string, CliArgument>> = {
-  [K in keyof T as K]: T[K] extends {
-    type: 'string'
-  }
-    ? T[K]['values'] extends 'single'
-      ? string | undefined
-      : string[]
-    : T[K] extends {
-          type: 'number'
-        }
-      ? T[K]['values'] extends 'single'
-        ? number | undefined
-        : number[]
-      : T[K] extends {
-            type: 'boolean'
-          }
-        ? boolean
-        : T[K] extends EnumArgument<readonly string[]>
-          ? T[K]['values'] extends 'single'
-            ? T[K]['validValues'][number] | undefined
-            : T[K]['validValues'][number][]
-          : never
-}
+export type Config<T extends Record<string, Argument<any>>> = T
 
 interface ArgumentChunk {
   first: string
@@ -133,14 +25,33 @@ interface ArgumentChunk {
   isLast: boolean
 }
 
+interface ConsoleLogger {
+  log: (...args: any[]) => void
+}
+
 /**
  * Additional arguments that can be used to configure the CLI parser.
  */
-export interface AdditionalCliArguments {
+export interface AdditionalCliOptions {
   /**
    * The version of the CLI command. If provided, the CLI provides a --version flag that prints the version and exits.
+   *
+   * If a string is provided, it is printed as-is.
+   * If an object it can have the following properties:
+   * - currentVersion: the current version of the CLI. This can be a string or a function that returns a Promise<string> or string.
+   * - checkForUpdates: Can be:
+   *   - a string name of the npm package to check for updates
+   *   - a function that returns a Promise<string | null> that returns the latest version or null if no update is available.
+   * - updateMessage: a function that takes the current version and latest version and returns a string message to display when an update is available.
    */
-  version?: string
+  // version?: string
+  version?:
+    | string
+    | {
+        currentVersion: string | (() => Promise<string> | string)
+        checkForUpdates?: string | (() => Promise<string | null>)
+        updateMessage?: (current: string, latest: string) => string
+      }
 
   /**
    * The argument string from the CLI. If not provided, the process.argv.slice(2) is used.
@@ -185,16 +96,21 @@ export interface AdditionalCliArguments {
    * Defaults to false
    */
   allowOperandsFromStdin?: boolean
+
+  /**
+   * A logger to use for printing help messages. If not provided, console.log is used.
+   */
+  consoleLogger?: ConsoleLogger
 }
 
 export type SelectedSubcommandWithArgs<
   C extends Record<string, Subcommand>,
-  O extends Record<string, CliArgument>,
-  A extends AdditionalCliArguments
+  O extends Record<string, Argument<any>>,
+  A extends AdditionalCliOptions
 > = keyof C extends never
   ? {
       subcommand: never
-      args: ParsedArgs<O>
+      args: ParsedArguments<O>
       operands: string[]
       anyValues: boolean
       printHelp: () => void
@@ -203,7 +119,7 @@ export type SelectedSubcommandWithArgs<
     ? {
         [K in keyof C]: {
           subcommand: K
-          args: ParsedArgs<C[K]['options']> & ParsedArgs<O>
+          args: ParsedArguments<C[K]['arguments']> & ParsedArguments<O>
           operands: string[]
           anyValues: boolean
           printHelp: () => void
@@ -212,7 +128,7 @@ export type SelectedSubcommandWithArgs<
     :
         | {
             subcommand: undefined
-            args: ParsedArgs<O>
+            args: ParsedArguments<O>
             operands: string[]
             anyValues: boolean
             printHelp: () => void
@@ -220,7 +136,7 @@ export type SelectedSubcommandWithArgs<
         | {
             [K in keyof C]: {
               subcommand: K
-              args: ParsedArgs<C[K]['options']> & ParsedArgs<O>
+              args: ParsedArguments<C[K]['arguments']> & ParsedArguments<O>
               operands: string[]
               anyValues: boolean
               printHelp: () => void
@@ -236,118 +152,43 @@ type Only<A, B> = {
  *
  * @param command the name of the command arguments are being parsed for.
  * @param subcommands the list of subcommands that can be used, if any.
- * @param cliOptions the configuration options for the CLI command.
- * @param additionalArgs additional arguments to be used for parsing and displaying help.
+ * @param cliArgs the configuration options for the CLI command.
+ * @param additionalOptions additional arguments to be used for parsing and displaying help.
  * @returns the parsed arguments, operands, and subcommand if applicable.
  */
-export function parseCliArguments<
-  const O extends Record<string, CliArgument>,
+export async function parseCliArguments<
+  const O extends Record<string, Argument<any>>,
   const C extends Record<string, Subcommand>,
-  const A extends AdditionalCliArguments
+  const A extends AdditionalCliOptions
 >(
   command: string,
   subcommands: C,
-  cliOptions: Config<O>,
-  additionalArgs?: Only<A, AdditionalCliArguments>
-): SelectedSubcommandWithArgs<C, O, A> {
-  const args = additionalArgs?.args ?? process.argv.slice(2)
-  const env = additionalArgs?.env ?? process.env
+  cliArgs: Config<O>,
+  additionalOptions?: Only<A, AdditionalCliOptions>
+): Promise<SelectedSubcommandWithArgs<C, O, A>> {
+  const args = additionalOptions?.args ?? process.argv.slice(2)
+  const env = additionalOptions?.env ?? process.env
   const parsedArgs: any = {}
   const operands: string[] = []
   const booleanOptions: Record<string, string> = {}
   const subcommandKeys = Object.keys(subcommands)
   const numberOfSubcommands = subcommandKeys.length
-  const combinedOptions: Record<string, CliArgument> = { ...cliOptions }
+  const combinedOptions: Record<string, Argument<any>> = { ...cliArgs }
+  const logger = additionalOptions?.consoleLogger ?? console
   let subcommand: string | undefined
 
-  if (args.length === 0 && additionalArgs?.showHelpIfNoArgs) {
-    printHelpContents(command, subcommands, cliOptions, additionalArgs)
+  if (args.length === 0 && additionalOptions?.showHelpIfNoArgs) {
+    printHelpContents(command, subcommands, cliArgs, additionalOptions)
     exit(0, undefined)
     return {} as any
   }
 
   // Step 1: Initialize defaults
-  initializeOptionDefaults(parsedArgs, booleanOptions, cliOptions)
+  const parsedEnvironmentArgs = {}
+  initializeOptionDefaults(parsedEnvironmentArgs, booleanOptions, cliArgs)
 
   // Step 2: Handle environment variables
-  parseEnvironmentVariables(cliOptions, parsedArgs, env, additionalArgs?.envPrefix)
-
-  if (additionalArgs?.envPrefix) {
-    const prefix = additionalArgs.envPrefix + '_'
-    const envToKeys = Object.keys(cliOptions).reduce(
-      (acc, key) => {
-        acc[camelToCapitalSnakeCase(key)] = key
-        return acc
-      },
-      {} as Record<string, string>
-    )
-
-    for (const [key, value] of Object.entries(env)) {
-      if (key.startsWith(prefix)) {
-        const optionKey = key.slice(prefix.length)
-        const option = envToKeys[optionKey]
-        if (option) {
-          const config = combinedOptions[option]
-          if (isEnumOption(config)) {
-            if (config.values === 'single') {
-              const matchingValue = config.validValues.find(
-                (v) => v.toLowerCase() === value!.toLowerCase()
-              )
-              if (!matchingValue) {
-                exit(
-                  2,
-                  `Environment ${key} allows only the following values: ${config.validValues.join(', ')}`
-                )
-              }
-              parsedArgs[option] = matchingValue
-            } else if (config.values === 'multiple') {
-              const invalidValues = []
-              const validValues = []
-              const values = value!.split(' ')
-              for (const v of values) {
-                const matchingValue = config.validValues.find(
-                  (valid) => valid.toLowerCase() === v.toLowerCase()
-                )
-                if (matchingValue) {
-                  validValues.push(matchingValue)
-                } else {
-                  invalidValues.push(value)
-                }
-              }
-              if (invalidValues.length > 0) {
-                exit(
-                  2,
-                  `Environment ${key} allows only the following values: ${config.validValues.join(', ')}`
-                )
-              }
-              parsedArgs[option] = validValues
-            }
-          } else if (config.type === 'boolean') {
-            parsedArgs[option] = true
-          } else if (config.values === 'single') {
-            const { parsed, invalid } = validateTypes(config.type, value!)
-            if (invalid.length > 0) {
-              exit(
-                2,
-                `Environment ${key} expects a valid ${config.type}, but received: ${invalid.join(', ')}`
-              )
-            }
-            parsedArgs[option] = parsed
-          } else if (config.values === 'multiple') {
-            const values = value!.split(' ')
-            const { parsed, invalid } = validateTypes(config.type, values)
-            if (invalid.length > 0) {
-              exit(
-                2,
-                `Environment ${key} expects a valid ${config.type}, but received: ${invalid.join(', ')}`
-              )
-            }
-            parsedArgs[option] = parsed
-          }
-        }
-      }
-    }
-  }
+  await parseEnvironmentVariables(cliArgs, parsedEnvironmentArgs, env, additionalOptions?.envPrefix)
 
   // Step 3: Group arguments into objects
   const commandChunks = groupArguments(args)
@@ -356,13 +197,16 @@ export function parseCliArguments<
   for (const { first, rest, isLast, isFirst } of commandChunks) {
     // Handle --help and --version
     if (first === '--help') {
-      printHelpContents(command, subcommands, cliOptions, additionalArgs, subcommand)
+      printHelpContents(command, subcommands, cliArgs, additionalOptions, subcommand)
       exit(0, undefined)
+      return {} as any
     }
 
     if (first === '--version') {
-      if (additionalArgs?.version) {
-        exit(0, additionalArgs?.version)
+      if (additionalOptions?.version) {
+        await printVersion(additionalOptions.version, logger)
+        exit(0, undefined)
+        return {} as any
       }
     }
 
@@ -390,9 +234,14 @@ export function parseCliArguments<
           return {} as any
         }
         subcommand = matchingCommands.at(0)!
-        const subcommandOptions = subcommands[subcommand].options
-        initializeOptionDefaults(parsedArgs, booleanOptions, subcommandOptions)
-        parseEnvironmentVariables(subcommandOptions, parsedArgs, env, additionalArgs?.envPrefix)
+        const subcommandOptions = subcommands[subcommand].arguments
+        initializeOptionDefaults(parsedEnvironmentArgs, booleanOptions, subcommandOptions)
+        await parseEnvironmentVariables(
+          subcommandOptions,
+          parsedEnvironmentArgs,
+          env,
+          additionalOptions?.envPrefix
+        )
         for (const [key, option] of Object.entries(subcommandOptions)) {
           combinedOptions[key] = option
         }
@@ -420,6 +269,15 @@ export function parseCliArguments<
         }
         matchingOption = exactMatch
       } else {
+        if ('--help'.startsWith(first)) {
+          printHelpContents(command, subcommands, cliArgs, additionalOptions, subcommand)
+          exit(0, undefined)
+          return {} as any
+        } else if ('--version'.startsWith(first) && additionalOptions?.version) {
+          await printVersion(additionalOptions.version, logger)
+          exit(0, undefined)
+          return {} as any
+        }
         exit(2, `Unknown argument: ${first}`)
       }
 
@@ -429,110 +287,49 @@ export function parseCliArguments<
       }
 
       const optionConfig = combinedOptions[matchingOption!]
-      if (isEnumOption(optionConfig)) {
-        if (rest.length === 0) {
-          if (optionConfig.values === 'single') {
-            exit(2, `Option ${first} expects a value, but received none`)
-          } else {
-            exit(2, `Option ${first} expects at least one value, but received none`)
-          }
+      if (optionConfig.present) {
+        parsedArgs[matchingOption!] = await optionConfig.present(parsedArgs[matchingOption!])
+      }
+
+      if (rest.length > 0 && optionConfig.character) {
+        if (!isLast) {
+          exit(
+            2,
+            `Validation error for ${first}: does not accept values but received ${rest.join(', ')}`
+          )
           return {} as any
+        } else {
+          operands.push(...rest)
         }
-        if (optionConfig.values === 'single') {
-          if (rest.length > 1 && !isLast) {
-            exit(
-              2,
-              `Option ${first} expects a single value, but received multiple: ${rest.join(', ')}`
-            )
-          }
-          const value = rest[0]
-          const matchingValue = optionConfig.validValues.find(
-            (v) => v.toLowerCase() === value.toLowerCase()
-          )
-          if (!matchingValue) {
-            exit(
-              2,
-              `Option ${first} allows only the following values: ${optionConfig.validValues.join(', ')}`
-            )
-          }
-          parsedArgs[matchingOption] = matchingValue
-          operands.push(...rest.slice(1))
-        } else if (optionConfig.values === 'multiple') {
-          const invalidValues = []
-          const validValues = []
-          for (const value of rest) {
-            const matchingValue = optionConfig.validValues.find(
-              (v) => v.toLowerCase() === value.toLowerCase()
-            )
-            if (matchingValue) {
-              validValues.push(matchingValue)
-            } else {
-              invalidValues.push(value)
-            }
-          }
-          if (invalidValues.length > 0) {
-            exit(
-              2,
-              `Option ${first} allows only the following values: ${optionConfig.validValues.join(', ')}`
-            )
-          }
-          parsedArgs[matchingOption] = validValues
-        }
-      } else if (optionConfig.type === 'boolean') {
-        //set boolean value
-        parsedArgs[matchingOption] = true
-        //Handle extra values
-        if (rest.length > 0) {
-          if (!isLast) {
-            exit(2, `Boolean option ${first} does not accept values`)
-          } else {
-            operands.push(...rest)
-          }
-        }
-      } else if (optionConfig.values === 'single') {
-        if (rest.length === 0) {
-          exit(2, `Option ${first} expects a value, but received none`)
-        }
-
-        //Validate the value
-        const { parsed, invalid } = validateTypes(optionConfig.type, rest[0])
-        if (invalid.length > 0) {
-          exit(
-            2,
-            `Option ${first} expects a valid ${optionConfig.type}, but received: ${invalid.join(', ')}`
-          )
-        }
-
-        //Set the value
-        parsedArgs[matchingOption] = parsed
-
-        if (rest.length > 1) {
-          if (!isLast) {
-            exit(
-              2,
-              `Option ${first} expects a single value, but received multiple: ${rest.join(', ')}`
-            )
-          } else {
-            operands.push(...rest.slice(1))
-          }
-        }
-      } else if (optionConfig.values === 'multiple') {
-        if (rest.length === 0) {
-          exit(2, `Option ${first} expects at least one value, but received none`)
-        }
-        //Set the Value
-        //Validate the value
-        const { parsed, invalid } = validateTypes(optionConfig.type, rest)
-        if (invalid.length > 0) {
-          exit(
-            2,
-            `Option ${first} expects a valid ${optionConfig.type}, but received: ${invalid.join(', ')}`
-          )
-        }
-
-        parsedArgs[matchingOption] = parsed
       } else {
-        throw new Error(`Unrecognized option values ${optionConfig.values}`)
+        const acceptsMultiple = optionConfig.acceptMultipleValues
+          ? optionConfig.acceptMultipleValues()
+          : false
+
+        let theRest = rest
+        if (!acceptsMultiple && rest.length > 1) {
+          if (isLast) {
+            theRest = [rest[0]]
+            operands.push(...rest.slice(1))
+          } else {
+            exit(
+              2,
+              `Validation error for ${first}: expects a single value but received ${rest.join(', ')}`
+            )
+          }
+        }
+
+        const currentValue = parsedArgs[matchingOption!]
+        const validation = await optionConfig.validateValues(currentValue, theRest)
+        if (!validation.valid) {
+          exit(2, `Validation error for ${first}: ${validation.message}`)
+          return {} as any
+        } else {
+          parsedArgs[matchingOption!] = await optionConfig.reduceValues(
+            currentValue,
+            validation.value
+          )
+        }
       }
     } else if (first.startsWith('-')) {
       if (rest.length > 0 && !isLast) {
@@ -553,43 +350,40 @@ export function parseCliArguments<
     }
   }
 
-  if (numberOfSubcommands > 0 && additionalArgs?.requireSubcommand && !subcommand) {
+  if (numberOfSubcommands > 0 && additionalOptions?.requireSubcommand && !subcommand) {
     exit(2, `A subcommand is required`)
   }
-
   // Step 4: Return results
   return {
-    args: parsedArgs,
+    args: { ...parsedEnvironmentArgs, ...parsedArgs },
     operands,
     subcommand: subcommand as keyof C extends never ? never : any,
     anyValues: args.length > 0,
     printHelp: () => {
-      printHelpContents(command, subcommands, cliOptions, additionalArgs, subcommand)
+      printHelpContents(command, subcommands, cliArgs, additionalOptions, subcommand)
     }
   }
 }
 
 /**
- * Initialize the default values for arguments
+ * Initialize the default values for arguments.
+ *
+ * Will populate the parsedArgs object with default values from the cliArguments.
+ * Will also populate the booleanOptions map with single character boolean options.
  *
  * @param parsedArgs the parsed arguments to default the values in
- * @param cliOptions the configuration options for the CLI commands
+ * @param booleanOptions a map of single character boolean options to their full names
+ * @param cliArguments the configuration options for the CLI commands
  */
-function initializeOptionDefaults<T extends Record<string, CliArgument>>(
+function initializeOptionDefaults<T extends Record<string, Argument<any>>>(
   parsedArgs: any,
   booleanOptions: Record<string, string>,
-  cliOptions: T
+  cliArguments: T
 ): any {
-  for (const [key, option] of Object.entries(cliOptions)) {
-    if (option.type === 'boolean') {
-      parsedArgs[key] = false //(option as BooleanOption).default
-      if (option.character) {
-        booleanOptions[(option as BooleanArgument).character.toLowerCase()] = key
-      }
-    } else if (option.values === 'single') {
-      parsedArgs[key] = undefined
-    } else if (option.values === 'multiple') {
-      parsedArgs[key] = []
+  for (const [key, option] of Object.entries(cliArguments)) {
+    parsedArgs[key] = option.defaultValue
+    if (option.character) {
+      booleanOptions[option.character.toLowerCase()] = key
     }
   }
 }
@@ -597,23 +391,23 @@ function initializeOptionDefaults<T extends Record<string, CliArgument>>(
 /**
  * Parse environment variables and set the values in the parsed arguments.
  *
- * @param options the configuration options for the CLI commands
+ * @param cliArguments the configuration options for the CLI commands
  * @param parsedArgs the parsed arguments to set the values in
  * @param env the environment variables to get values from
  * @param envPrefix the prefix to use for environment variables, if any
  */
-function parseEnvironmentVariables(
-  options: Record<string, CliArgument>,
+async function parseEnvironmentVariables(
+  cliArguments: Record<string, Argument<any>>,
   parsedArgs: any,
   env: Record<string, string | undefined>,
   envPrefix: string | undefined
-): void {
+): Promise<void> {
   if (!envPrefix) {
     return
   }
 
   const prefix = envPrefix + '_'
-  const envToKeys = Object.keys(options).reduce(
+  const envToKeys = Object.keys(cliArguments).reduce(
     (acc, key) => {
       acc[camelToCapitalSnakeCase(key)] = key
       return acc
@@ -626,62 +420,19 @@ function parseEnvironmentVariables(
       const optionKey = key.slice(prefix.length)
       const option = envToKeys[optionKey]
       if (option) {
-        const config = options[option]
-        if (isEnumOption(config)) {
-          if (config.values === 'single') {
-            const matchingValue = config.validValues.find(
-              (v) => v.toLowerCase() === value!.toLowerCase()
-            )
-            if (!matchingValue) {
-              exit(
-                2,
-                `Environment ${key} allows only the following values: ${config.validValues.join(', ')}`
-              )
-            }
-            parsedArgs[option] = matchingValue
-          } else if (config.values === 'multiple') {
-            const invalidValues = []
-            const validValues = []
-            const values = value!.split(' ')
-            for (const v of values) {
-              const matchingValue = config.validValues.find(
-                (valid) => valid.toLowerCase() === v.toLowerCase()
-              )
-              if (matchingValue) {
-                validValues.push(matchingValue)
-              } else {
-                invalidValues.push(value)
-              }
-            }
-            if (invalidValues.length > 0) {
-              exit(
-                2,
-                `Environment ${key} allows only the following values: ${config.validValues.join(', ')}`
-              )
-            }
-            parsedArgs[option] = validValues
-          }
-        } else if (config.type === 'boolean') {
-          parsedArgs[option] = true
-        } else if (config.values === 'single') {
-          const { parsed, invalid } = validateTypes(config.type, value!)
-          if (invalid.length > 0) {
-            exit(
-              2,
-              `Environment ${key} expects a valid ${config.type}, but received: ${invalid.join(', ')}`
-            )
-          }
-          parsedArgs[option] = parsed
-        } else if (config.values === 'multiple') {
+        const config = cliArguments[option]
+        if (config.present) {
+          parsedArgs[option] = await config.present(parsedArgs[option])
+        }
+        if (!config.character) {
           const values = value!.split(' ')
-          const { parsed, invalid } = validateTypes(config.type, values)
-          if (invalid.length > 0) {
-            exit(
-              2,
-              `Environment ${key} expects a valid ${config.type}, but received: ${invalid.join(', ')}`
-            )
+          const validation = await config.validateValues(parsedArgs[option], values)
+          if (!validation.valid) {
+            const s = values.length > 1 ? 's' : ''
+            exit(2, `Invalid value${s} for environment ${key}: ${validation.message}`)
+            return
           }
-          parsedArgs[option] = parsed
+          parsedArgs[option] = await config.reduceValues(parsedArgs[option], validation.value)
         }
       }
     }
@@ -734,34 +485,6 @@ function groupArguments(args: string[]): ArgumentChunk[] {
   return grouped
 }
 
-/**
- * Validate the types of a standard argument
- *
- * @param type the type the argument accepts
- * @param values the values to validate
- * @returns an object with the invalid values and the parsed values
- */
-function validateTypes(
-  type: 'string' | 'number',
-  values: string[] | string
-): { invalid: string[]; parsed: string | string[] | number | number[] } {
-  if (type === 'string') {
-    return { invalid: [], parsed: values }
-  }
-  if (!Array.isArray(values)) {
-    const isValid = !isNaN(Number(values))
-    if (isValid) {
-      return { invalid: [], parsed: Number(values) }
-    }
-    return { invalid: [values], parsed: 0 }
-  }
-  const invalid = values.filter((v) => isNaN(Number(v)))
-  if (invalid.length > 0) {
-    return { invalid, parsed: [] }
-  }
-  return { invalid: [], parsed: values.map(Number) }
-}
-
 function camelToCapitalSnakeCase(input: string): string {
   return input
     .replace(/([a-z])([A-Z])/g, '$1_$2') // Insert underscore before capital letters
@@ -775,25 +498,26 @@ function camelToKebabCase(input: string): string {
 }
 
 export function printHelpContents<
-  O extends Record<string, CliArgument>,
+  O extends Record<string, Argument<any>>,
   C extends Record<string, Subcommand>
 >(
   command: string,
   subcommands: C,
   cliOptions: O,
-  additionalArgs?: AdditionalCliArguments,
+  additionalArgs?: AdditionalCliOptions,
   selectedSubcommand?: string | undefined
 ): void {
+  const logger = additionalArgs?.consoleLogger ?? console
   const operandsExpected =
     additionalArgs?.expectOperands != undefined ? additionalArgs?.expectOperands : true
   const operandsName = additionalArgs?.operandsName ?? 'operand'
   const operandsString = operandsExpected ? ` [--] [${operandsName}1] [${operandsName}2]` : ''
 
-  const anyGlobalFlags = Object.values(cliOptions).some((option) => isBooleanOption(option))
+  const anyGlobalFlags = Object.values(cliOptions).some((option) => option.character)
 
   if (selectedSubcommand) {
-    const anyCommandFlags = Object.values(subcommands[selectedSubcommand].options).some((option) =>
-      isBooleanOption(option)
+    const anyCommandFlags = Object.values(subcommands[selectedSubcommand].arguments).some(
+      (option) => option.character
     )
 
     const flags = anyGlobalFlags || anyCommandFlags ? ' [flags]' : ''
@@ -803,14 +527,15 @@ export function printHelpContents<
       usageString += `\n       <${operandsName}s to stdout> | ${command} ${selectedSubcommand} [options]${flags}`
     }
 
-    console.log(usageString)
-    console.log(`\n${subcommands[selectedSubcommand].description}`)
-    console.log(`${selectedSubcommand} Options:`)
-    printOptions(subcommands[selectedSubcommand].options)
-    console.log('')
+    logger.log(usageString)
+    logger.log('')
+    logger.log(`${subcommands[selectedSubcommand].description}`)
+    logger.log(`${selectedSubcommand} Options:`)
+    printOptions(subcommands[selectedSubcommand].arguments, logger)
+    logger.log('')
   } else {
     const anyCommandFlags = Object.values(subcommands).some((subcommand) =>
-      Object.values(subcommand.options).some((option) => isBooleanOption(option))
+      Object.values(subcommand.arguments).some((option) => option.character)
     )
 
     const flags = anyGlobalFlags || anyCommandFlags ? ' [flags]' : ''
@@ -829,22 +554,23 @@ export function printHelpContents<
       usageString += `\n       <${operandsName}s to stdout> | ${singleUseString}`
     }
 
-    console.log(usageString)
+    logger.log(usageString)
 
     const longestCommand = subcommandKeys.reduce((acc, cmd) => Math.max(acc, cmd.length), 0)
 
     if (subcommandKeys.length > 0) {
-      console.log('Subcommands:')
+      logger.log('Subcommands:')
       for (const cmd of subcommandKeys) {
         const description = subcommands[cmd].description
-        console.log(`  ${(cmd + ':').padEnd(longestCommand + 1)} ${description}`)
+        logger.log(`  ${(cmd + ':').padEnd(longestCommand + 1)} ${description}`)
       }
-      console.log(`\n Use ${command} <subcommand> --help for more information about a subcommand`)
+      logger.log('')
+      logger.log(` Use ${command} <subcommand> --help for more information about a subcommand`)
     }
   }
 
-  console.log('Global Options:')
-  const globalOptions: Record<string, CliArgument> = {
+  logger.log('Global Options:')
+  const globalOptions: Record<string, Argument<any>> = {
     ...cliOptions,
     ...({
       help: {
@@ -858,12 +584,13 @@ export function printHelpContents<
     } as any
   }
 
-  printOptions(globalOptions)
+  printOptions(globalOptions, logger)
 }
 
-function printOptions<O extends Record<string, CliArgument>, C extends Record<string, Subcommand>>(
-  cliOptions: Config<O>
-): void {
+function printOptions<
+  O extends Record<string, Argument<any>>,
+  C extends Record<string, Subcommand>
+>(cliOptions: Config<O>, logger: ConsoleLogger): void {
   const longestOption =
     Object.keys(cliOptions).reduce(
       (acc, key) => Math.max(acc, camelToKebabCase(key).length + 2),
@@ -875,34 +602,92 @@ function printOptions<O extends Record<string, CliArgument>, C extends Record<st
   const nonBooleanBuffer = '     '
   for (const [key, option] of Object.entries(cliOptions)) {
     let optionString = `  --${camelToKebabCase(key)}:`.padEnd(longestOption + 3)
-    if (isBooleanOption(option)) {
+    if (option.character) {
       optionString += `(-${option.character}) `
     } else {
       optionString += nonBooleanBuffer
     }
     const leftBar = optionString.length
-    optionString += option.description + '. '
-    if (isEnumOption(option)) {
-      if (option.values === 'single') {
-        optionString += `Must be one of: ${option.validValues.join(', ')}.`
-      } else {
-        optionString += `Valid values: ${option.validValues.join(', ')}.`
-      }
-    } else if (option.type === 'boolean') {
-      // Do nothing
-    } else if (option.values === 'single') {
-      optionString += `One ${option.type} required`
-    } else if (option.values === 'multiple') {
-      optionString += `Multiple ${option.type}s allowed`
-    }
+    optionString += option.description
 
-    console.log(optionString.slice(0, terminalWidth))
+    logger.log(optionString.slice(0, terminalWidth))
     let stringToPrint = optionString.slice(terminalWidth)
     const secondLineLength = terminalWidth - leftBar
 
     while (stringToPrint.length > 0) {
-      console.log(' '.repeat(leftBar) + stringToPrint.slice(0, secondLineLength))
+      logger.log(' '.repeat(leftBar) + stringToPrint.slice(0, secondLineLength).trimStart())
       stringToPrint = stringToPrint.slice(secondLineLength)
     }
   }
+}
+
+async function printVersion(
+  versionInfo: AdditionalCliOptions['version'],
+  logger: ConsoleLogger
+): Promise<void> {
+  if (!versionInfo) {
+    logger.log('Version information not available. This is a bug.')
+    return
+  }
+
+  if (typeof versionInfo === 'string') {
+    logger.log(versionInfo)
+    return
+  }
+
+  let currentVersion: string | null = null
+  if (typeof versionInfo.currentVersion === 'string') {
+    currentVersion = versionInfo.currentVersion
+  } else if (typeof versionInfo.currentVersion === 'function') {
+    currentVersion = await versionInfo.currentVersion()
+  }
+
+  if (!currentVersion) {
+    logger.log('Current version not available')
+    return
+  }
+
+  let latestVersion: string | null = null
+  if (typeof versionInfo.checkForUpdates == 'string') {
+    latestVersion = await getLatestVersionFromNpm(versionInfo.checkForUpdates)
+  } else if (typeof versionInfo.checkForUpdates === 'function') {
+    latestVersion = await versionInfo.checkForUpdates()
+  }
+
+  let updateMessage: string | undefined = undefined
+  if (currentVersion && latestVersion && currentVersion !== latestVersion) {
+    if (versionInfo.updateMessage) {
+      updateMessage = versionInfo.updateMessage(currentVersion, latestVersion)
+    } else if (typeof versionInfo.checkForUpdates === 'string') {
+      updateMessage = `Latest: ${latestVersion}. To update run: npm update -g ${versionInfo.checkForUpdates}`
+    } else {
+      updateMessage = `Latest: ${latestVersion}.`
+    }
+  } else if (currentVersion && latestVersion && currentVersion === latestVersion) {
+    // updateMessage = 'You are using the latest version.'
+  }
+
+  logger.log(currentVersion)
+  if (updateMessage) {
+    logger.log(updateMessage)
+  }
+}
+
+/**
+ * Fetch the latest version of a package from the npm registry.
+ *
+ * @param packageName the name of the npm package to check, e.g. "my-cli-tool" or "@my-org/my-cli-tool"
+ * @returns the latest version of the package published on npm or null if any error occurs
+ */
+async function getLatestVersionFromNpm(packageName: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://registry.npmjs.org/${packageName}/latest`)
+    if (res.ok) {
+      const data = await res.json()
+      return data.version || null
+    }
+  } catch (e) {
+    // Ignore errors fetching latest version
+  }
+  return null
 }

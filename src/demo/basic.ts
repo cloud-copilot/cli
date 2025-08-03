@@ -1,8 +1,19 @@
 import { parseCliArguments } from '../cli.js'
 
-const cli = parseCliArguments('basic.ts', {}, {}, {})
+const run = async () => {
+  const cli = await parseCliArguments(
+    'src/demo/basic.ts',
+    {},
+    {},
+    {
+      version: '1.0.0'
+    }
+  )
 
-console.log(cli)
+  console.log(cli)
+}
+
+run().then(() => {})
 
 /*
 
