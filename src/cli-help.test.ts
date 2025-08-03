@@ -5,7 +5,6 @@ import { enumArgument } from './arguments/enumArgument.js'
 import { singleValueArgument } from './arguments/singleValueArgument.js'
 import { stringArgument } from './arguments/stringArguments.js'
 import { AdditionalCliOptions, Subcommand, parseCliArguments } from './cli.js'
-import { FakeLogger } from './cli.test.js'
 import { exit } from './utils.js'
 vi.mock('./utils.js')
 
