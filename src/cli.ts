@@ -183,9 +183,10 @@ export async function parseCliArguments<
     return {} as any
   }
 
+  const allDefaults = {}
   // Step 1: Initialize defaults
   const parsedEnvironmentArgs = {}
-  initializeOptionDefaults(parsedEnvironmentArgs, booleanOptions, cliArgs)
+  initializeOptionDefaults(allDefaults, booleanOptions, cliArgs)
 
   // Step 2: Handle environment variables
   await parseEnvironmentVariables(cliArgs, parsedEnvironmentArgs, env, additionalOptions?.envPrefix)
@@ -216,11 +217,11 @@ export async function parseCliArguments<
         if (isLast) {
           operands.push(first, ...rest)
         } else {
-          exit(2, `Invalid: ${first}, all options must specified using a --argument`)
+          exit(2, `Invalid: ${first}, all arguments must specified using a --argument`)
         }
       } else {
         if (!isLast && rest.length > 0) {
-          exit(2, `Options must be specified using a --argument, ${rest.join(' ')} is ambiguous`)
+          exit(2, `Arguments must be specified using a --argument, ${rest.join(' ')} is ambiguous`)
         }
         const matchingCommands = subcommandKeys.filter((cmd) =>
           cmd.toLowerCase().startsWith(first.toLowerCase())
@@ -235,7 +236,7 @@ export async function parseCliArguments<
         }
         subcommand = matchingCommands.at(0)!
         const subcommandOptions = subcommands[subcommand].arguments
-        initializeOptionDefaults(parsedEnvironmentArgs, booleanOptions, subcommandOptions)
+        initializeOptionDefaults(allDefaults, booleanOptions, subcommandOptions)
         await parseEnvironmentVariables(
           subcommandOptions,
           parsedEnvironmentArgs,
@@ -282,20 +283,23 @@ export async function parseCliArguments<
       }
 
       if (!matchingOption) {
-        exit(2, `Unknown option: ${first}`)
+        exit(2, `Unknown argument: ${first}`)
         return {} as any
       }
 
-      const optionConfig = combinedOptions[matchingOption!]
+      const selectedArgument = matchingOption!
+      const fullArgumentName = `--${camelToKebabCase(selectedArgument)}`
+      const optionConfig = combinedOptions[selectedArgument]
+      initializeDefault(parsedArgs, combinedOptions, selectedArgument)
       if (optionConfig.present) {
-        parsedArgs[matchingOption!] = await optionConfig.present(parsedArgs[matchingOption!])
+        parsedArgs[selectedArgument] = await optionConfig.present(parsedArgs[selectedArgument])
       }
 
       if (rest.length > 0 && optionConfig.character) {
         if (!isLast) {
           exit(
             2,
-            `Validation error for ${first}: does not accept values but received ${rest.join(', ')}`
+            `Validation error for ${fullArgumentName}: does not accept values but received ${rest.join(', ')}`
           )
           return {} as any
         } else {
@@ -314,18 +318,18 @@ export async function parseCliArguments<
           } else {
             exit(
               2,
-              `Validation error for ${first}: expects a single value but received ${rest.join(', ')}`
+              `Validation error for ${fullArgumentName}: expects a single value but received ${rest.join(', ')}`
             )
           }
         }
 
-        const currentValue = parsedArgs[matchingOption!]
+        const currentValue = parsedArgs[selectedArgument]
         const validation = await optionConfig.validateValues(currentValue, theRest)
         if (!validation.valid) {
-          exit(2, `Validation error for ${first}: ${validation.message}`)
+          exit(2, `Validation error for ${fullArgumentName}: ${validation.message}`)
           return {} as any
         } else {
-          parsedArgs[matchingOption!] = await optionConfig.reduceValues(
+          parsedArgs[selectedArgument] = await optionConfig.reduceValues(
             currentValue,
             validation.value
           )
@@ -333,7 +337,7 @@ export async function parseCliArguments<
       }
     } else if (first.startsWith('-')) {
       if (rest.length > 0 && !isLast) {
-        exit(2, `Boolean option(s) ${first} should not have values`)
+        exit(2, `Boolean flags(s) ${first} should not have values`)
         return {} as any
       } else if (isLast) {
         operands.push(...rest)
@@ -355,7 +359,7 @@ export async function parseCliArguments<
   }
   // Step 4: Return results
   return {
-    args: { ...parsedEnvironmentArgs, ...parsedArgs },
+    args: { ...allDefaults, ...parsedEnvironmentArgs, ...parsedArgs },
     operands,
     subcommand: subcommand as keyof C extends never ? never : any,
     anyValues: args.length > 0,
@@ -385,6 +389,25 @@ function initializeOptionDefaults<T extends Record<string, Argument<any>>>(
     if (option.character) {
       booleanOptions[option.character.toLowerCase()] = key
     }
+  }
+}
+
+/**
+ * Initialize the default value for a specific argument if it is not already set.
+ *
+ * If the argument is not already present in parsedArgs, it will be set to the default value from cliArguments.
+ *
+ * @param parsedArgs the parsed arguments so far.
+ * @param cliArguments the CLI arguments configuration
+ * @param key the specific argument key to initialize
+ */
+function initializeDefault<T extends Record<string, Argument<any>>>(
+  parsedArgs: any,
+  cliArguments: T,
+  key: keyof T
+) {
+  if (!Object.hasOwn(parsedArgs, key)) {
+    parsedArgs[key] = cliArguments[key].defaultValue
   }
 }
 
@@ -421,6 +444,7 @@ async function parseEnvironmentVariables(
       const option = envToKeys[optionKey]
       if (option) {
         const config = cliArguments[option]
+        initializeDefault(parsedArgs, cliArguments, option)
         if (config.present) {
           parsedArgs[option] = await config.present(parsedArgs[option])
         }
