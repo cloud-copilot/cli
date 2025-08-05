@@ -144,7 +144,6 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
       fooBar: stringArrayArgument({
         description: 'A foo bar option'
       })
-      // { type: 'string', description: 'A foo bar option', values: 'multiple' }
     },
     additionalArgs: {
       args: ['--foo-bar', 'arg1', 'arg2']
@@ -197,7 +196,6 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
         description: 'A foo bar option',
         defaultValue: []
       })
-      // fooBar: { type: 'string', description: 'A foo bar option', values: 'multiple', defaultValue: [] }
     },
     additionalArgs: {
       args: ['--foo-bar', 'arg1', '--foo-bar', 'arg2', 'arg3']
@@ -206,7 +204,6 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
       args: {
         fooBar: ['arg1', 'arg2', 'arg3']
       }
-      // operands: ['arg3']
     }
   },
   {
@@ -329,7 +326,6 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
         description: 'A foo bar option',
         defaultValue: []
       })
-      // fooBar: { type: 'string', description: 'A foo bar option', values: 'multiple' }
     },
     additionalArgs: {
       args: ['--foo-bar']
@@ -477,7 +473,6 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     name: 'invalid number value',
     args: {
       fooBar: numberArgument({ description: 'A foo bar number' })
-      // fooBar: { type: 'number', description: 'A foo bar option', values: 'single' }
     },
     additionalArgs: {
       args: ['--foo-bar', 'arg1']
@@ -495,7 +490,6 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
       fooBar: numberArrayArgument({
         description: 'A foo bar number array'
       })
-      // fooBar: { type: 'number', description: 'A foo bar option', values: 'multiple' }
     },
     additionalArgs: {
       args: ['--foo-bar', '123', '456']
@@ -512,7 +506,6 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
       fooBar: numberArrayArgument({
         description: 'A foo bar number array'
       })
-      // fooBar: { type: 'number', description: 'A foo bar option', values: 'multiple' }
     },
     additionalArgs: {
       args: ['--foo-bar', '123', 'arg1']
@@ -580,8 +573,6 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     args: {
       fooBar: booleanArgument({ character: 'f', description: 'A foo bar option' }),
       bazBar: stringArgument({ description: 'A baz bar option' })
-      // fooBar: { character: 'f', description: 'A foo bar option', type: 'boolean' },
-      // barBaz: { type: 'string', description: 'A bar baz option', values: 'single' }
     },
     additionalArgs: {
       args: ['-f', 'arg1', '--barBaz']
@@ -589,7 +580,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message: 'Boolean flag(s) -f should not have values'
+        message: 'Boolean flag(s) -f should not have values but received arg1'
       }
     }
   },
@@ -1263,7 +1254,6 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
         description: 'Initialize the project',
         arguments: {
           fooBar: stringArgument({ description: 'A foo bar option' })
-          // fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
         }
       },
       download: {
@@ -1273,7 +1263,6 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     },
     args: {
       bazBang: stringArgument({ description: 'baz bang', values: 'single' })
-      // bazBang: { type: 'string', description: 'baz bang', values: 'single' }
     },
     additionalArgs: {
       args: ['download', '--foo-bar', 'arg1', '--baz-bang', 'arg2']
@@ -1292,13 +1281,11 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
         description: 'Initialize the project',
         arguments: {
           fooBar: stringArgument({ description: 'A foo bar option' })
-          // fooBar: { type: 'string', description: 'A foo bar option', values: 'single' }
         }
       }
     },
     args: {
       bazBang: stringArgument({ description: 'baz bang', values: 'single' })
-      // bazBang: { type: 'string', description: 'baz bang', values: 'single' }
     },
     additionalArgs: {
       envPrefix: 'DAVE',
@@ -1326,6 +1313,198 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
         code: 0 // message is not checked
       }
     }
+  },
+  {
+    name: 'should error if operands provided when expectOperands is false',
+    additionalArgs: {
+      args: ['arg1', 'arg2'],
+      expectOperands: false
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message: 'Operands are not expected but received: arg1, arg2'
+      }
+    }
+  },
+  {
+    name: 'should error if -- separator used when expectOperands is false',
+    additionalArgs: {
+      args: ['--', 'arg1', 'arg2'],
+      expectOperands: false
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message: `Operands are not expected but '--' separator was used`
+      }
+    }
+  },
+  {
+    name: 'should error if operands provided after single value argument when expectOperands is false',
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'value1', 'operand1', 'operand2'],
+      expectOperands: false
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message:
+          'Validation error for --foo-bar: expects a single value but received value1, operand1, operand2'
+      }
+    }
+  },
+  {
+    name: 'should error if multiple values provided to single value argument when expectOperands is false',
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'value1', 'value2'],
+      expectOperands: false
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message:
+          'Validation error for --foo-bar: expects a single value but received value1, value2'
+      }
+    }
+  },
+  {
+    name: 'should error if operands provided with boolean flag when expectOperands is false',
+    args: {
+      verbose: booleanArgument({
+        description: 'Enable verbose output',
+        character: 'v'
+      })
+    },
+    additionalArgs: {
+      args: ['--verbose', 'operand1'],
+      expectOperands: false
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message: 'Validation error for --verbose: does not accept values but received operand1'
+      }
+    }
+  },
+  {
+    name: 'should error if operands provided with subcommand when expectOperands is false',
+    subcommands: {
+      init: {
+        description: 'Initialize the project',
+        arguments: {}
+      }
+    },
+    additionalArgs: {
+      args: ['init', 'operand1', 'operand2'],
+      expectOperands: false
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message: 'Operands are not expected but received: operand1, operand2'
+      }
+    }
+  },
+  {
+    name: 'should allow no operands when expectOperands is false',
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'value'],
+      expectOperands: false
+    },
+    expected: {
+      args: {
+        fooBar: 'value'
+      },
+      operands: []
+    }
+  },
+  {
+    name: 'should allow operands when expectOperands is true (default)',
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'value', 'operand1'],
+      expectOperands: true
+    },
+    expected: {
+      args: {
+        fooBar: 'value'
+      },
+      operands: ['operand1']
+    }
+  },
+  {
+    name: 'should allow operands when expectOperands is not specified (defaults to true)',
+    args: {
+      fooBar: stringArgument({
+        description: 'A foo bar option'
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'value', 'operand1']
+    },
+    expected: {
+      args: {
+        fooBar: 'value'
+      },
+      operands: ['operand1']
+    }
+  },
+  {
+    name: 'should error if short boolean flag has values when expectOperands is false',
+    args: {
+      verbose: booleanArgument({
+        description: 'Enable verbose output',
+        character: 'v'
+      })
+    },
+    additionalArgs: {
+      args: ['-v', 'operand1'],
+      expectOperands: false
+    },
+    expected: {
+      exit: {
+        code: 2,
+        message: 'Boolean flag(s) -v should not have values but received operand1'
+      }
+    }
+  },
+  {
+    name: 'should allow operands when expectOperands is true (default) with short boolean flag',
+    args: {
+      verbose: booleanArgument({
+        description: 'Enable verbose output',
+        character: 'v'
+      })
+    },
+    additionalArgs: {
+      args: ['-v', 'operand1']
+    },
+    expected: {
+      args: {
+        verbose: true
+      },
+      operands: ['operand1']
+    }
   }
 ]
 
@@ -1348,7 +1527,7 @@ describe('parseCliArguments', () => {
 
       const inMemoryLogger = new FakeLogger()
 
-      const commands = test.subcommands || {} //.map((c) => ({ name: c, description: c }))
+      const commands = test.subcommands || {}
       const result = await parseCliArguments('myutil', commands, test.args || {}, {
         ...test.additionalArgs,
         consoleLogger: inMemoryLogger

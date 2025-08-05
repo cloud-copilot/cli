@@ -35,6 +35,7 @@ I was inspired by https://github.com/lirantal/nodejs-cli-apps-best-practices and
 
 - **[Getting Started](docs/GettingStarted.md)** - Complete tutorial for new users
 - **[Parsing Reference](docs/ParsingReference.md)** - Detailed parsing rules and mechanics
+- **[Operands Guide](docs/OperandsGuide.md)** - Working with positional arguments and expectOperands
 - **[Subcommands Guide](docs/SubcommandsGuide.md)** - Building CLIs with subcommands
 - **[Custom Arguments](docs/CustomArguments.md)** - Creating custom argument types with validation
 - **[Environment Variables](docs/EnvironmentVariables.md)** - Environment variable integration
@@ -45,6 +46,8 @@ I was inspired by https://github.com/lirantal/nodejs-cli-apps-best-practices and
 
 - **[Basic CLI](src/demo/basic.ts)** - Minimal CLI setup with version handling
 - **[Arguments Demo](src/demo/arguments.ts)** - All argument types including custom date arguments
+- **[Operands Demo](src/demo/operands.ts)** - Working with positional arguments (operands)
+- **[No Operands Demo](src/demo/noOperands.ts)** - CLIs that only accept flags and options
 - **[Subcommands Demo](src/demo/subcommands.ts)** - CLI with multiple subcommands and arguments
 - **[Version Handling](src/demo/version.ts)** - Version checking and update notifications
 - **[Reading from stdin](src/demo/stdin.ts)** - Processing input from stdin

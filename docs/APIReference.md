@@ -79,7 +79,9 @@ const cli = await parseCliArguments(
 #### Help Options
 
 - **`operandsName`**: Name for operands in help text (default: "operands")
-- **`expectOperands`**: Whether to show operands in usage (default: true)
+- **`expectOperands`**: Whether operands are expected and allowed (default: true)
+  - When `true`: `operands` has type `string[]` and can be accessed normally
+  - When `false`: `operands` has type `never` and cannot be accessed at compile time; CLI will error if operands are provided at runtime
 - **`allowOperandsFromStdin`**: Show stdin note in help (default: false)
 
 #### Behavior Options
@@ -98,7 +100,7 @@ The return type of `parseCliArguments` provides full type safety based on your c
 type Result = {
   subcommand: never
   args: ParsedArguments<O>
-  operands: string[]
+  operands: OperandsType<A> // string[] when expectOperands is true (default), never when false
   anyValues: boolean
   printHelp: () => void
 }
@@ -107,7 +109,7 @@ type Result = {
 type Result = {
   subcommand: keyof C | undefined
   args: ParsedArguments<O> & ParsedArguments<C[K]['arguments']>
-  operands: string[]
+  operands: OperandsType<A> // string[] when expectOperands is true (default), never when false
   anyValues: boolean
   printHelp: () => void
 }
@@ -117,11 +119,16 @@ type Result = {
   [K in keyof C]: {
     subcommand: K
     args: ParsedArguments<O> & ParsedArguments<C[K]['arguments']>
-    operands: string[]
+    operands: OperandsType<A> // string[] when expectOperands is true (default), never when false
     anyValues: boolean
     printHelp: () => void
   }
 }[keyof C]
+
+// Helper type for operands
+type OperandsType<A extends AdditionalCliOptions> = A extends { expectOperands: false }
+  ? never
+  : string[]
 ```
 
 #### `ParsedArguments<T>`
