@@ -103,6 +103,10 @@ export interface AdditionalCliOptions {
   consoleLogger?: ConsoleLogger
 }
 
+type OperandsType<A extends AdditionalCliOptions> = A extends { expectOperands: false }
+  ? never
+  : string[]
+
 export type SelectedSubcommandWithArgs<
   C extends Record<string, Subcommand>,
   O extends Record<string, Argument<any>>,
@@ -111,7 +115,7 @@ export type SelectedSubcommandWithArgs<
   ? {
       subcommand: never
       args: ParsedArguments<O>
-      operands: string[]
+      operands: OperandsType<A>
       anyValues: boolean
       printHelp: () => void
     }
@@ -120,7 +124,7 @@ export type SelectedSubcommandWithArgs<
         [K in keyof C]: {
           subcommand: K
           args: ParsedArguments<C[K]['arguments']> & ParsedArguments<O>
-          operands: string[]
+          operands: OperandsType<A>
           anyValues: boolean
           printHelp: () => void
         }
@@ -129,7 +133,7 @@ export type SelectedSubcommandWithArgs<
         | {
             subcommand: undefined
             args: ParsedArguments<O>
-            operands: string[]
+            operands: OperandsType<A>
             anyValues: boolean
             printHelp: () => void
           }
@@ -137,7 +141,7 @@ export type SelectedSubcommandWithArgs<
             [K in keyof C]: {
               subcommand: K
               args: ParsedArguments<C[K]['arguments']> & ParsedArguments<O>
-              operands: string[]
+              operands: OperandsType<A>
               anyValues: boolean
               printHelp: () => void
             }
@@ -176,6 +180,9 @@ export async function parseCliArguments<
   const combinedOptions: Record<string, Argument<any>> = { ...cliArgs }
   const logger = additionalOptions?.consoleLogger ?? console
   let subcommand: string | undefined
+  const expectOperands = Object.hasOwn(additionalOptions || {}, 'expectOperands')
+    ? !!additionalOptions?.expectOperands
+    : true
 
   if (args.length === 0 && additionalOptions?.showHelpIfNoArgs) {
     printHelpContents(command, subcommands, cliArgs, additionalOptions)
@@ -252,6 +259,9 @@ export async function parseCliArguments<
 
     // Validate options
     if (first == '--') {
+      if (!expectOperands) {
+        exit(2, `Operands are not expected but '--' separator was used`)
+      }
       operands.push(...rest)
     } else if (first.startsWith('--')) {
       const key = first.slice(2).replaceAll('-', '').toLowerCase()
@@ -303,7 +313,16 @@ export async function parseCliArguments<
           )
           return {} as any
         } else {
-          operands.push(...rest)
+          // If we're at the last argument and there are values, check if operands are expected
+          if (!expectOperands) {
+            exit(
+              2,
+              `Validation error for ${fullArgumentName}: does not accept values but received ${rest.join(', ')}`
+            )
+            return {} as any
+          } else {
+            operands.push(...rest)
+          }
         }
       } else {
         const acceptsMultiple = optionConfig.acceptMultipleValues
@@ -312,14 +331,9 @@ export async function parseCliArguments<
 
         let theRest = rest
         if (!acceptsMultiple && rest.length > 1) {
-          if (isLast) {
+          if (isLast && expectOperands) {
             theRest = [rest[0]]
             operands.push(...rest.slice(1))
-          } else {
-            exit(
-              2,
-              `Validation error for ${fullArgumentName}: expects a single value but received ${rest.join(', ')}`
-            )
           }
         }
 
@@ -337,10 +351,16 @@ export async function parseCliArguments<
       }
     } else if (first.startsWith('-')) {
       if (rest.length > 0 && !isLast) {
-        exit(2, `Boolean flag(s) ${first} should not have values`)
+        exit(2, `Boolean flag(s) ${first} should not have values but received ${rest.join(', ')}`)
         return {} as any
-      } else if (isLast) {
-        operands.push(...rest)
+      } else if (isLast && rest.length > 0) {
+        // If we're at the last argument and there are values, check if operands are expected
+        if (!expectOperands) {
+          exit(2, `Boolean flag(s) ${first} should not have values but received ${rest.join(', ')}`)
+          return {} as any
+        } else {
+          operands.push(...rest)
+        }
       }
 
       // Short options (-s, -spq)
@@ -357,16 +377,22 @@ export async function parseCliArguments<
   if (numberOfSubcommands > 0 && additionalOptions?.requireSubcommand && !subcommand) {
     exit(2, `A subcommand is required`)
   }
+
+  // Step 5: Validate operands if expectOperands is false
+  if (!expectOperands && operands.length > 0) {
+    exit(2, `Operands are not expected but received: ${operands.join(', ')}`)
+  }
+
   // Step 4: Return results
   return {
     args: { ...allDefaults, ...parsedEnvironmentArgs, ...parsedArgs },
-    operands,
+    operands: expectOperands ? operands : ([] as never),
     subcommand: subcommand as keyof C extends never ? never : any,
     anyValues: args.length > 0,
     printHelp: () => {
       printHelpContents(command, subcommands, cliArgs, additionalOptions, subcommand)
     }
-  }
+  } as SelectedSubcommandWithArgs<C, O, A>
 }
 
 /**

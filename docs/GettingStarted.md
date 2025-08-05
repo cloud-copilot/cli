@@ -214,11 +214,35 @@ const cli = await parseCliArguments(
   },
   {
     operandsName: 'files',
-    expectOperands: true
+    expectOperands: true, // Default: accepts operands
+    allowOperandsFromStdin: true
   }
 )
 
 // Help will show: my-cli [options] [--] [files1] [files2]
+// And note about reading from stdin
+```
+
+### Operands Configuration
+
+```typescript
+// For CLIs that work with files, URLs, etc. (default behavior)
+const fileProcessor = await parseCliArguments(
+  'process-files',
+  {},
+  { verbose: booleanArgument({ description: 'Verbose output' }) }
+  // expectOperands defaults to true
+)
+fileProcessor.operands // string[] - accessible
+
+// For CLIs that only use flags and options
+const configTool = await parseCliArguments(
+  'config-tool',
+  {},
+  { validate: booleanArgument({ description: 'Validate config' }) },
+  { expectOperands: false } // Disable operands
+)
+// configTool.operands  // Type 'never' - not accessible at compile time
 ```
 
 ## Error Handling
