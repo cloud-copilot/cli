@@ -1,3 +1,10 @@
+## [0.2.3](https://github.com/cloud-copilot/cli/compare/v0.2.2...v0.2.3) (2025-08-05)
+
+
+### Features
+
+* Validate operands when expectOperands is false ([7f986ef](https://github.com/cloud-copilot/cli/commit/7f986efccdedef87ea6628597962dc3b6cd44be5))
+
 ## [0.2.2](https://github.com/cloud-copilot/cli/compare/v0.2.1...v0.2.2) (2025-08-03)
 
 
