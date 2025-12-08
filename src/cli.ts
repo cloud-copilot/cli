@@ -535,16 +535,16 @@ function groupArguments(args: string[]): ArgumentChunk[] {
   return grouped
 }
 
-function camelToCapitalSnakeCase(input: string): string {
+export function camelToCapitalSnakeCase(input: string): string {
   return input
-    .replace(/([a-z])([A-Z])/g, '$1_$2') // Insert underscore before capital letters
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2') // Insert underscore before capital letters
     .toUpperCase() // Convert to uppercase
 }
 
-function camelToKebabCase(input: string): string {
+export function camelToKebabCase(input: string): string {
   return input
-    .replace(/([a-z])([A-Z])/g, '$1-$2') // Insert underscore before capital letters
-    .toLowerCase() // Convert to uppercase
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2') // Insert dash before capital letters
+    .toLowerCase() // Convert to lowercase
 }
 
 export function printHelpContents<

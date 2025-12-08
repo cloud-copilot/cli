@@ -6,7 +6,13 @@ import { enumArrayArgument } from './arguments/enumArrayArgument.js'
 import { mapArgument } from './arguments/mapArgument.js'
 import { numberArgument, numberArrayArgument } from './arguments/numberArguments.js'
 import { stringArgument, stringArrayArgument } from './arguments/stringArguments.js'
-import { AdditionalCliOptions, Subcommand, parseCliArguments } from './cli.js'
+import {
+  AdditionalCliOptions,
+  Subcommand,
+  camelToCapitalSnakeCase,
+  camelToKebabCase,
+  parseCliArguments
+} from './cli.js'
 import { exit } from './utils.js'
 vi.mock('./utils.js')
 
@@ -1560,6 +1566,27 @@ describe('parseCliArguments', () => {
           expect(result.anyValues).toBe(test.expected.anyValues)
         }
       }
+    })
+  }
+})
+
+describe('argumentCaseConversion', () => {
+  const tests = [
+    { input: 'fooBar', kebab: 'foo-bar', snake: 'FOO_BAR' },
+    { input: 'baz', kebab: 'baz', snake: 'BAZ' },
+    { input: 'longOptionNameTest', kebab: 'long-option-name-test', snake: 'LONG_OPTION_NAME_TEST' },
+    { input: 'A', kebab: 'a', snake: 'A' },
+    { input: 'someXmlValue', kebab: 'some-xml-value', snake: 'SOME_XML_VALUE' },
+    { input: 's3AbacOverride', kebab: 's3-abac-override', snake: 'S3_ABAC_OVERRIDE' }
+  ]
+
+  for (const test of tests) {
+    it(`should convert ${test.input} to kebab case as ${test.kebab}`, () => {
+      expect(camelToKebabCase(test.input)).toBe(test.kebab)
+    })
+
+    it(`should convert ${test.input} to snake case as ${test.snake}`, () => {
+      expect(camelToCapitalSnakeCase(test.input)).toBe(test.snake)
     })
   }
 })
