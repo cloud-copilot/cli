@@ -1,3 +1,10 @@
+## [0.2.23](https://github.com/cloud-copilot/cli/compare/v0.2.22...v0.2.23) (2025-12-08)
+
+
+### Bug Fixes
+
+* Break argument strings on numbers. Add tests. ([7b321f7](https://github.com/cloud-copilot/cli/commit/7b321f79f377e399c6dfbb0af0cbd0d58c44c971))
+
 ## [0.2.22](https://github.com/cloud-copilot/cli/compare/v0.2.21...v0.2.22) (2025-12-06)
 
 ## [0.2.21](https://github.com/cloud-copilot/cli/compare/v0.2.20...v0.2.21) (2025-11-30)
