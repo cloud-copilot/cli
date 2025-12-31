@@ -1,3 +1,10 @@
+## [0.2.27](https://github.com/cloud-copilot/cli/compare/v0.2.26...v0.2.27) (2025-12-31)
+
+
+### Bug Fixes
+
+* Add compiler errors when extra attributes are added to argument functions ([e726e68](https://github.com/cloud-copilot/cli/commit/e726e6872caa69c90461113cef38666a30231ee3))
+
 ## [0.2.26](https://github.com/cloud-copilot/cli/compare/v0.2.25...v0.2.26) (2025-12-27)
 
 ## [0.2.25](https://github.com/cloud-copilot/cli/compare/v0.2.24...v0.2.25) (2025-12-20)
