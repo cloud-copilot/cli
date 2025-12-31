@@ -5,15 +5,22 @@ type EnumArrayType<T extends { validValues: string[]; defaultValue?: string[] | 
     ? T['validValues'][number] | T['defaultValue'][number]
     : T['validValues'][number]
 
-export function enumArrayArgument<
-  const O extends { defaultValue: string[]; validValues: string[] } & PerArgumentArgs
->(options: O): Argument<EnumArrayType<O>[]>
-export function enumArrayArgument<
-  const O extends { defaultValue?: undefined; validValues: string[] } & PerArgumentArgs
->(options: O): Argument<EnumArrayType<O>[] | undefined>
-export function enumArrayArgument<
-  const O extends { defaultValue?: string[] | undefined; validValues: string[] } & PerArgumentArgs
->(options: O): Argument<EnumArrayType<O>[]> | Argument<EnumArrayType<O>[] | undefined> {
+type EnumArrayWithDefault = { defaultValue: string[]; validValues: string[] } & PerArgumentArgs
+type EnumArrayWithoutDefault = { defaultValue?: undefined; validValues: string[] } & PerArgumentArgs
+type EnumArrayWithOptionalDefault = {
+  defaultValue?: string[] | undefined
+  validValues: string[]
+} & PerArgumentArgs
+
+export function enumArrayArgument<const O extends EnumArrayWithDefault>(
+  options: EnumArrayWithDefault
+): Argument<EnumArrayType<O>[]>
+export function enumArrayArgument<const O extends EnumArrayWithoutDefault>(
+  options: EnumArrayWithoutDefault
+): Argument<EnumArrayType<O>[] | undefined>
+export function enumArrayArgument<const O extends EnumArrayWithOptionalDefault>(
+  options: EnumArrayWithOptionalDefault
+): Argument<EnumArrayType<O>[]> | Argument<EnumArrayType<O>[] | undefined> {
   return {
     description:
       options.description +

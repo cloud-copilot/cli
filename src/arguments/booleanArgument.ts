@@ -6,8 +6,8 @@ import { Argument, PerArgumentArgs, ValidatedValues } from './argument.js'
  * @param options the description and the single character that can be used to set the value to true
  * @returns a boolean argument
  */
-export function booleanArgument<const O extends { character: string } & PerArgumentArgs>(
-  options: O
+export function booleanArgument(
+  options: { character: string } & PerArgumentArgs
 ): Argument<boolean> {
   return {
     description: options.description,
