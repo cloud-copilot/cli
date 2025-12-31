@@ -2,6 +2,10 @@ import { Argument, PerArgumentArgs, ValidatedValues } from './argument.js'
 
 type MapResult = Record<string, string[]>
 
+type MapWithDefault = { defaultValue: MapResult } & PerArgumentArgs
+type MapWithoutDefault = { defaultValue?: undefined } & PerArgumentArgs
+type MapWithOptionalDefault = { defaultValue?: MapResult | undefined } & PerArgumentArgs
+
 /**
  * Creates a map argument where the first value is the key and the rest are values.
  *
@@ -10,15 +14,11 @@ type MapResult = Record<string, string[]>
  * @param options the description and optional default value
  * @returns a map argument
  */
-export function mapArgument<const O extends { defaultValue: MapResult } & PerArgumentArgs>(
-  options: O
-): Argument<MapResult>
-export function mapArgument<const O extends { defaultValue?: undefined } & PerArgumentArgs>(
-  options: O
-): Argument<MapResult | undefined>
-export function mapArgument<
-  const O extends { defaultValue?: MapResult | undefined } & PerArgumentArgs
->(options: O): Argument<MapResult> | Argument<MapResult | undefined> {
+export function mapArgument(options: MapWithDefault): Argument<MapResult>
+export function mapArgument(options: MapWithoutDefault): Argument<MapResult | undefined>
+export function mapArgument(
+  options: MapWithOptionalDefault
+): Argument<MapResult> | Argument<MapResult | undefined> {
   return {
     description: options.description + `. Each instance requires a key and at least one value.`,
     validateValues: async (

@@ -4,6 +4,12 @@ type SingleValueValidator<ValueType> = (
   rawValue: string
 ) => Promise<ValidatedValues<ValueType>> | ValidatedValues<ValueType>
 
+type ArgumentWithDefault<ValueType> = { defaultValue: ValueType } & PerArgumentArgs
+type ArgumentWithoutDefault<ValueType> = { defaultValue?: undefined } & PerArgumentArgs
+type ArgumentWithOptionalDefault<ValueType> = {
+  defaultValue?: ValueType | undefined
+} & PerArgumentArgs
+
 /**
  * Creates a single value argument factory for a specific type
  */
@@ -11,15 +17,13 @@ export function singleValueArgument<ValueType>(
   validator: SingleValueValidator<ValueType>,
   descriptionSuffix: string = ''
 ) {
-  function createArgument<const O extends { defaultValue: ValueType } & PerArgumentArgs>(
-    options: O
-  ): Argument<ValueType>
-  function createArgument<const O extends { defaultValue?: undefined } & PerArgumentArgs>(
-    options: O
+  function createArgument(options: ArgumentWithDefault<ValueType>): Argument<ValueType>
+  function createArgument(
+    options: ArgumentWithoutDefault<ValueType>
   ): Argument<ValueType | undefined>
-  function createArgument<
-    const O extends { defaultValue?: ValueType | undefined } & PerArgumentArgs
-  >(options: O): Argument<ValueType> | Argument<ValueType | undefined> {
+  function createArgument(
+    options: ArgumentWithOptionalDefault<ValueType>
+  ): Argument<ValueType> | Argument<ValueType | undefined> {
     return {
       description: options.description + descriptionSuffix,
       validateValues: async (

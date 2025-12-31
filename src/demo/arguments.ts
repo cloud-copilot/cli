@@ -2,6 +2,7 @@ import { arrayValueArgument } from '../arguments/arrayValueArgument.js'
 import { booleanArgument } from '../arguments/booleanArgument.js'
 import { enumArgument } from '../arguments/enumArgument.js'
 import { enumArrayArgument } from '../arguments/enumArrayArgument.js'
+import { mapArgument } from '../arguments/mapArgument.js'
 import { numberArgument, numberArrayArgument } from '../arguments/numberArguments.js'
 import { singleValueArgument } from '../arguments/singleValueArgument.js'
 import { stringArgument, stringArrayArgument } from '../arguments/stringArguments.js'
@@ -112,6 +113,13 @@ const run = async () => {
       amazing: booleanArgument({
         description: 'Make it amazing',
         character: 'a'
+      }),
+      mapArg: mapArgument({
+        description: 'A map argument'
+      }),
+      mapArgWithDefault: mapArgument({
+        description: 'A map argument with default',
+        defaultValue: { defaultKey: ['defaultValue1', 'defaultValue2'] }
       })
     },
     {
@@ -139,6 +147,8 @@ const run = async () => {
   cli.args.dateArgWithDefault // Date
   cli.args.dateArr // Date[] | undefined
   cli.args.dateArrWithDefault // Date[]
+  cli.args.mapArg // Record<string, string[]> | undefined
+  cli.args.mapArgWithDefault // Record<string, string[]>
 
   const badArg = cli.args.badArg //compile error
 }

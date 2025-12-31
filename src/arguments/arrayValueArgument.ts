@@ -4,6 +4,12 @@ type ArrayValueValidator<ValueType> = (
   rawValue: string
 ) => Promise<ValidatedValues<ValueType>> | ValidatedValues<ValueType>
 
+type ArrayWithDefault<ValueType> = { defaultValue: ValueType[] } & PerArgumentArgs
+type ArrayWithoutDefault<ValueType> = { defaultValue?: undefined } & PerArgumentArgs
+type ArrayWithOptionalDefault<ValueType> = {
+  defaultValue?: ValueType[] | undefined
+} & PerArgumentArgs
+
 /**
  * Creates an array value argument factory for a specific type
  */
@@ -11,15 +17,13 @@ export function arrayValueArgument<ValueType>(
   validator: ArrayValueValidator<ValueType>,
   descriptionSuffix: string = ''
 ) {
-  function createArgument<const O extends { defaultValue: ValueType[] } & PerArgumentArgs>(
-    options: O
-  ): Argument<ValueType[]>
-  function createArgument<const O extends { defaultValue?: undefined } & PerArgumentArgs>(
-    options: O
+  function createArgument(options: ArrayWithDefault<ValueType>): Argument<ValueType[]>
+  function createArgument(
+    options: ArrayWithoutDefault<ValueType>
   ): Argument<ValueType[] | undefined>
-  function createArgument<
-    const O extends { defaultValue?: ValueType[] | undefined } & PerArgumentArgs
-  >(options: O): Argument<ValueType[]> | Argument<ValueType[] | undefined> {
+  function createArgument(
+    options: ArrayWithOptionalDefault<ValueType>
+  ): Argument<ValueType[]> | Argument<ValueType[] | undefined> {
     return {
       description: options.description + descriptionSuffix,
       validateValues: async (
