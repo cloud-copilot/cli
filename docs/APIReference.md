@@ -220,12 +220,12 @@ const customArgument = (options: { description: string }): Argument<MyType> => (
   description: options.description,
   defaultValue: undefined,
 
-  validateValues: async (current, values) => {
+  validateValues: async (current, values, isCurrentlyDefaulted) => {
     // Your validation logic
     return { valid: true, value: parsedValue }
   },
 
-  reduceValues: async (current, newValue) => {
+  reduceValues: async (current, newValue, isCurrentlyDefaulted) => {
     // How to combine multiple occurrences
     return newValue
   },

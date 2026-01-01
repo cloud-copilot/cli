@@ -16,13 +16,16 @@ export type Argument<ArgumentType> = {
 
   /**
    * Validate all values passed to the argument at once.
+   * @param currentValue the current value of the argument
    * @param values the array of strings passed to the argument
+   * @param isCurrentlyDefaulted true if the current value has not been set by the user and is still the default value
    * @returns if the value is invalid, returns { valid: false, message: string } and message will be shown to the user.
    *          if the value is valid, returns { valid: true, values`: ArgumentType[] } where value is the parsed value.
    */
   validateValues: (
     currentValue: ArgumentType,
-    values: string[]
+    values: string[],
+    isCurrentlyDefaulted: boolean
   ) => Promise<ValidValue<ArgumentType> | InvalidValue> | ValidValue<ArgumentType> | InvalidValue
 
   /**
@@ -30,11 +33,13 @@ export type Argument<ArgumentType> = {
    *
    * @param current the current value of the argument, can be undefined if there is no default value
    * @param newValues the new values being added as parsed by validateValues
+   * @param isCurrentlyDefaulted true if the current value has not been set by the user and is still the default value
    * @returns the new value of the argument
    */
   reduceValues: (
     currentValue: ArgumentType,
-    newValues: NonNullable<ArgumentType>
+    newValues: NonNullable<ArgumentType>,
+    isCurrentlyDefaulted: boolean
   ) => Promise<ArgumentType> | ArgumentType
 
   /**

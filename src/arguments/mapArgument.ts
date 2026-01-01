@@ -23,7 +23,8 @@ export function mapArgument(
     description: options.description + `. Each instance requires a key and at least one value.`,
     validateValues: async (
       currentValue: MapResult | undefined,
-      values: string[]
+      values: string[],
+      isCurrentlyDefaulted: boolean
     ): Promise<ValidatedValues<MapResult>> => {
       const [first, ...rest] = values
       if (!first) {
@@ -32,7 +33,7 @@ export function mapArgument(
       if (rest.length < 1) {
         return { valid: false, message: `${first} requires at least one value` }
       }
-      if (currentValue && first in currentValue) {
+      if (!isCurrentlyDefaulted && currentValue && first in currentValue) {
         return { valid: false, message: `${first} is set multiple times` }
       }
       return {
@@ -42,8 +43,12 @@ export function mapArgument(
         }
       }
     },
-    reduceValues: async (current: MapResult | undefined, newValue: MapResult) => {
-      if (!current) {
+    reduceValues: async (
+      current: MapResult | undefined,
+      newValue: MapResult,
+      isCurrentlyDefaulted: boolean
+    ) => {
+      if (isCurrentlyDefaulted || !current) {
         return { ...newValue }
       }
       return { ...current, ...newValue }

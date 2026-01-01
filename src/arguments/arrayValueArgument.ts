@@ -28,7 +28,8 @@ export function arrayValueArgument<ValueType>(
       description: options.description + descriptionSuffix,
       validateValues: async (
         current: ValueType[] | undefined,
-        values: string[]
+        values: string[],
+        isCurrentlyDefaulted: boolean
       ): Promise<ValidatedValues<ValueType[]>> => {
         if (values.length === 0) {
           return { valid: false, message: 'at least one value is required' }
@@ -45,8 +46,12 @@ export function arrayValueArgument<ValueType>(
 
         return { valid: true, value: validatedValues }
       },
-      reduceValues: async (current: ValueType[] | undefined, newValues: ValueType[]) => {
-        if (!current) {
+      reduceValues: async (
+        current: ValueType[] | undefined,
+        newValues: ValueType[],
+        isCurrentlyDefaulted?: boolean
+      ) => {
+        if (isCurrentlyDefaulted || !current) {
           return newValues
         }
         current.push(...newValues)

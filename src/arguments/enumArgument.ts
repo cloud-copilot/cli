@@ -27,7 +27,8 @@ export function enumArgument<const O extends EnumWithOptionalDefault>(
       `. One value required, valid values are: ${options.validValues.join(', ')}`,
     validateValues: (
       currentValue: EnumType<O> | undefined,
-      values: string[]
+      values: string[],
+      isCurrentlyDefaulted: boolean
     ): ValidatedValues<EnumType<O>> => {
       if (values.length == 0) {
         return { valid: false, message: 'a value is required' }
@@ -52,7 +53,11 @@ export function enumArgument<const O extends EnumWithOptionalDefault>(
 
       return { valid: true, value: match as EnumType<O> }
     },
-    reduceValues: (current: EnumType<O> | undefined, newValue: EnumType<O>) => newValue,
+    reduceValues: (
+      current: EnumType<O> | undefined,
+      newValue: EnumType<O>,
+      isCurrentlyDefaulted: boolean
+    ) => newValue,
     defaultValue: options.defaultValue
   }
 }

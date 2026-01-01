@@ -28,7 +28,8 @@ export function singleValueArgument<ValueType>(
       description: options.description + descriptionSuffix,
       validateValues: async (
         currentValue: ValueType | undefined,
-        values: string[]
+        values: string[],
+        isCurrentlyDefaulted: boolean
       ): Promise<ValidatedValues<ValueType>> => {
         if (currentValue !== undefined && currentValue != options.defaultValue) {
           return {
@@ -48,7 +49,11 @@ export function singleValueArgument<ValueType>(
 
         return validator(values[0])
       },
-      reduceValues: async (current: ValueType | undefined, newValue: ValueType) => newValue,
+      reduceValues: async (
+        current: ValueType | undefined,
+        newValue: ValueType,
+        isCurrentlyDefaulted: boolean
+      ) => newValue,
       defaultValue: options.defaultValue
     }
   }

@@ -191,12 +191,19 @@ export async function parseCliArguments<
   }
 
   const allDefaults = {}
+  const isSetByCli: Record<string, boolean> = {}
   // Step 1: Initialize defaults
   const parsedEnvironmentArgs = {}
   initializeOptionDefaults(allDefaults, booleanOptions, cliArgs)
 
   // Step 2: Handle environment variables
-  await parseEnvironmentVariables(cliArgs, parsedEnvironmentArgs, env, additionalOptions?.envPrefix)
+  await parseEnvironmentVariables(
+    cliArgs,
+    parsedEnvironmentArgs,
+    env,
+    additionalOptions?.envPrefix,
+    isSetByCli
+  )
 
   // Step 3: Group arguments into objects
   const commandChunks = groupArguments(args)
@@ -248,7 +255,8 @@ export async function parseCliArguments<
           subcommandOptions,
           parsedEnvironmentArgs,
           env,
-          additionalOptions?.envPrefix
+          additionalOptions?.envPrefix,
+          isSetByCli
         )
         for (const [key, option] of Object.entries(subcommandOptions)) {
           combinedOptions[key] = option
@@ -338,15 +346,21 @@ export async function parseCliArguments<
         }
 
         const currentValue = parsedArgs[selectedArgument]
-        const validation = await optionConfig.validateValues(currentValue, theRest)
+        const validation = await optionConfig.validateValues(
+          currentValue,
+          theRest,
+          isSetByCli[selectedArgument] === undefined
+        )
         if (!validation.valid) {
           exit(2, `Validation error for ${fullArgumentName}: ${validation.message}`)
           return {} as any
         } else {
           parsedArgs[selectedArgument] = await optionConfig.reduceValues(
             currentValue,
-            validation.value
+            validation.value,
+            isSetByCli[selectedArgument] === undefined
           )
+          isSetByCli[selectedArgument] = true
         }
       }
     } else if (first.startsWith('-')) {
@@ -449,7 +463,8 @@ async function parseEnvironmentVariables(
   cliArguments: Record<string, Argument<any>>,
   parsedArgs: any,
   env: Record<string, string | undefined>,
-  envPrefix: string | undefined
+  envPrefix: string | undefined,
+  valuesSetByCli: Record<string, boolean>
 ): Promise<void> {
   if (!envPrefix) {
     return
@@ -476,13 +491,22 @@ async function parseEnvironmentVariables(
         }
         if (!config.character) {
           const values = value!.split(' ')
-          const validation = await config.validateValues(parsedArgs[option], values)
+          const validation = await config.validateValues(
+            parsedArgs[option],
+            values,
+            valuesSetByCli[option] === undefined
+          )
           if (!validation.valid) {
             const s = values.length > 1 ? 's' : ''
             exit(2, `Invalid value${s} for environment ${key}: ${validation.message}`)
             return
           }
-          parsedArgs[option] = await config.reduceValues(parsedArgs[option], validation.value)
+          parsedArgs[option] = await config.reduceValues(
+            parsedArgs[option],
+            validation.value,
+            valuesSetByCli[option] === undefined
+          )
+          valuesSetByCli[option] = true
         }
       }
     }

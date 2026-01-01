@@ -27,7 +27,8 @@ export function enumArrayArgument<const O extends EnumArrayWithOptionalDefault>(
       `. One or more values required, valid values are: ${options.validValues.join(', ')}`,
     validateValues: async (
       currentValue: EnumArrayType<O>[] | undefined,
-      values: string[]
+      values: string[],
+      isCurrentlyDefaulted: boolean
     ): Promise<ValidatedValues<EnumArrayType<O>[]>> => {
       if (values.length == 0) {
         return { valid: false, message: 'At least one value is required' }
@@ -54,9 +55,11 @@ export function enumArrayArgument<const O extends EnumArrayWithOptionalDefault>(
     },
     reduceValues: async (
       current: EnumArrayType<O>[] | undefined,
-      newValues: EnumArrayType<O>[]
+      newValues: EnumArrayType<O>[],
+      isCurrentlyDefaulted?: boolean
     ) => {
-      if (!current) {
+      if (isCurrentlyDefaulted || !current) {
+        // If the current value is the default or undefined, replace it entirely
         return newValues
       }
       current.push(...newValues)
