@@ -1,3 +1,10 @@
+## [0.2.28](https://github.com/cloud-copilot/cli/compare/v0.2.27...v0.2.28) (2026-01-01)
+
+
+### Bug Fixes
+
+* Correctly handle user input when arrays and maps have defaults ([61231f4](https://github.com/cloud-copilot/cli/commit/61231f403ea5f6d92ce89ba1ac2960fb618b6c2f))
+
 ## [0.2.27](https://github.com/cloud-copilot/cli/compare/v0.2.26...v0.2.27) (2025-12-31)
 
 
