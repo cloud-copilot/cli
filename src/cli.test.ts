@@ -295,6 +295,40 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     }
   },
   {
+    name: 'string array with defautlt value and no arguments provided',
+    args: {
+      fooBar: stringArrayArgument({
+        description: 'A foo bar option',
+        defaultValue: ['default1', 'default2']
+      })
+    },
+    additionalArgs: {
+      args: []
+    },
+    expected: {
+      args: {
+        fooBar: ['default1', 'default2']
+      }
+    }
+  },
+  {
+    name: 'string array with default value and arguments provided',
+    args: {
+      fooBar: stringArrayArgument({
+        description: 'A foo bar option',
+        defaultValue: ['default1', 'default2']
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'arg1', 'arg2']
+    },
+    expected: {
+      args: {
+        fooBar: ['arg1', 'arg2']
+      }
+    }
+  },
+  {
     name: 'fail if a boolean option has a value',
     args: {
       doStuff: booleanArgument({ description: 'A foo bar option', character: 'd' }),
@@ -1052,6 +1086,42 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     }
   },
   {
+    name: 'enum array with defaults and arguments provided',
+    args: {
+      fooBar: enumArrayArgument({
+        description: 'A foo bar option',
+        validValues: ['alpha', 'beta', 'charlie', 'delta'],
+        defaultValue: ['alpha']
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'delta']
+    },
+    expected: {
+      args: {
+        fooBar: ['delta']
+      }
+    }
+  },
+  {
+    name: 'enum array with defaults and arguments provided as a superset of defaults',
+    args: {
+      fooBar: enumArrayArgument({
+        description: 'A foo bar option',
+        validValues: ['alpha', 'beta', 'charlie', 'delta'],
+        defaultValue: ['alpha']
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'alpha', 'delta']
+    },
+    expected: {
+      args: {
+        fooBar: ['alpha', 'delta']
+      }
+    }
+  },
+  {
     name: 'enum environment variable, single value, valid',
     args: {
       fooBar: enumArgument({
@@ -1203,6 +1273,52 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
       exit: {
         code: 2,
         message: 'Validation error for --foo-bar: key1 is set multiple times'
+      }
+    }
+  },
+  {
+    name: 'map argument with default value and no override',
+    args: {
+      fooBar: mapArgument({
+        description: 'A foo bar map option',
+        defaultValue: {
+          key1: ['default1', 'default2'],
+          key2: ['default3']
+        }
+      })
+    },
+    additionalArgs: {
+      args: []
+    },
+    expected: {
+      args: {
+        fooBar: {
+          key1: ['default1', 'default2'],
+          key2: ['default3']
+        }
+      }
+    }
+  },
+  {
+    name: 'map argument with default value and overrides provided',
+    args: {
+      fooBar: mapArgument({
+        description: 'A foo bar map option',
+        defaultValue: {
+          key1: ['default1', 'default2'],
+          key2: ['default3']
+        }
+      })
+    },
+    additionalArgs: {
+      args: ['--foo-bar', 'key1', 'override1', '--foo-bar', 'key2', 'override2']
+    },
+    expected: {
+      args: {
+        fooBar: {
+          key1: ['override1'],
+          key2: ['override2']
+        }
       }
     }
   },

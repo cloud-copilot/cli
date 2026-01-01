@@ -12,13 +12,17 @@ export function booleanArgument(
   return {
     description: options.description,
     character: options.character,
-    validateValues: (currentValue: boolean, value: string[]): ValidatedValues<boolean> => {
+    validateValues: (
+      currentValue: boolean,
+      value: string[],
+      isCurrentlyDefaulted: boolean
+    ): ValidatedValues<boolean> => {
       if (value.length == 0) {
         return { valid: true, value: true }
       }
       return { valid: false, message: `does not accept values but received ${value.join(', ')}` }
     },
-    reduceValues: (current: boolean, newValue: boolean) => current,
+    reduceValues: (current: boolean, newValue: boolean, isCurrentlyDefaulted: boolean) => current,
     present: (currentValue: boolean) => true,
     defaultValue: false
   }

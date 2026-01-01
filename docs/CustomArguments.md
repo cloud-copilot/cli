@@ -106,31 +106,34 @@ The `Argument<T>` interface has several key functions:
 The `reduceValues` function is crucial for handling arguments that appear multiple times. It defines how new values should be combined with existing ones:
 
 ```typescript
-reduceValues: (currentValue: ArgumentType, newValues: NonNullable<ArgumentType>) =>
-  Promise<ArgumentType> | ArgumentType
+reduceValues: (
+  currentValue: ArgumentType,
+  newValues: NonNullable<ArgumentType>,
+  isCurrentlyDefaulted?: boolean
+) => Promise<ArgumentType> | ArgumentType
 ```
 
 **Examples of different reduce strategies:**
 
 ```typescript
 // Single value (replace): --config file1.json --config file2.json → file2.json
-reduceValues: async (current, newValue) => newValue
+reduceValues: async (current, newValue, isCurrentlyDefaulted) => newValue
 
 // Array (append): --include *.js --include *.ts → ['*.js', '*.ts']
-reduceValues: async (current, newValues) => {
-  if (!current) return newValues
+reduceValues: async (current, newValues, isCurrentlyDefaulted) => {
+  if (isCurrentlyDefaulted || !current) return newValues
   current.push(...newValues)
   return current
 }
 
 // Map (merge): --env KEY1 val1 --env KEY2 val2 → {KEY1: 'val1', KEY2: 'val2'}
-reduceValues: async (current, newValue) => {
+reduceValues: async (current, newValue, isCurrentlyDefaulted) => {
   if (!current) return { ...newValue }
   return { ...current, ...newValue }
 }
 
 // Set (unique): --tag tag1 --tag tag1 --tag tag2 → Set(['tag1', 'tag2'])
-reduceValues: async (current, newValues) => {
+reduceValues: async (current, newValues, isCurrentlyDefaulted) => {
   if (!current) return new Set(newValues)
   newValues.forEach((val) => current.add(val))
   return current
@@ -151,7 +154,7 @@ const configArgument = (options: {
   description: options.description + '. Format: KEY=VALUE',
   defaultValue: options.defaultValue,
 
-  validateValues: async (current, values) => {
+  validateValues: async (current, values, isCurrentlyDefaulted) => {
     if (values.length === 0) {
       return { valid: false, message: 'at least one KEY=VALUE pair required' }
     }
@@ -174,7 +177,7 @@ const configArgument = (options: {
     return { valid: true, value: config }
   },
 
-  reduceValues: async (current, newConfig) => {
+  reduceValues: async (current, newConfig, isCurrentlyDefaulted) => {
     if (!current) return newConfig
     return { ...current, ...newConfig }
   },
@@ -200,7 +203,7 @@ const weightedItemsArgument = (options: {
   description: options.description + '. Format: ITEM:WEIGHT',
   defaultValue: options.defaultValue,
 
-  validateValues: async (current, values) => {
+  validateValues: async (current, values, isCurrentlyDefaulted) => {
     if (values.length === 0) {
       return { valid: false, message: 'at least one ITEM:WEIGHT required' }
     }
@@ -228,7 +231,7 @@ const weightedItemsArgument = (options: {
     return { valid: true, value: items }
   },
 
-  reduceValues: async (current, newItems) => {
+  reduceValues: async (current, newItems, isCurrentlyDefaulted) => {
     if (!current) return newItems
 
     // Merge items, updating weights for existing items
@@ -267,7 +270,7 @@ const statsArgument = (options: { description: string }): Argument<StatsData | u
   description: options.description + '. Accumulates numerical data for statistics',
   defaultValue: undefined,
 
-  validateValues: async (current, values) => {
+  validateValues: async (current, values, isCurrentlyDefaulted) => {
     if (values.length === 0) {
       return { valid: false, message: 'at least one number required' }
     }
@@ -290,7 +293,7 @@ const statsArgument = (options: { description: string }): Argument<StatsData | u
     return { valid: true, value: stats }
   },
 
-  reduceValues: async (current, newStats) => {
+  reduceValues: async (current, newStats, isCurrentlyDefaulted) => {
     if (!current) return newStats
 
     return {
@@ -327,7 +330,7 @@ const fileListArgument = (options: {
   description: options.description + '. Collects file paths with metadata',
   defaultValue: [],
 
-  validateValues: async (current, values) => {
+  validateValues: async (current, values, isCurrentlyDefaulted) => {
     if (values.length === 0) {
       return { valid: false, message: 'at least one file path required' }
     }
@@ -356,7 +359,7 @@ const fileListArgument = (options: {
     return { valid: true, value: files }
   },
 
-  reduceValues: async (current, newFiles) => {
+  reduceValues: async (current, newFiles, isCurrentlyDefaulted) => {
     const combined = [...current]
 
     // Check for duplicates and merge
