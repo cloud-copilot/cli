@@ -1,3 +1,4 @@
+import { NoExtraKeys } from '../utils.js'
 import { Argument, PerArgumentArgs, ValidatedValues } from './argument.js'
 
 type EnumArrayType<T extends { validValues: string[]; defaultValue?: string[] | undefined }> =
@@ -5,21 +6,18 @@ type EnumArrayType<T extends { validValues: string[]; defaultValue?: string[] | 
     ? T['validValues'][number] | T['defaultValue'][number]
     : T['validValues'][number]
 
-type EnumArrayWithDefault = { defaultValue: string[]; validValues: string[] } & PerArgumentArgs
-type EnumArrayWithoutDefault = { defaultValue?: undefined; validValues: string[] } & PerArgumentArgs
-type EnumArrayWithOptionalDefault = {
-  defaultValue?: string[] | undefined
-  validValues: string[]
-} & PerArgumentArgs
+type EnumArrayOptions = { defaultValue?: string[]; validValues: string[] } & PerArgumentArgs
 
-export function enumArrayArgument<const O extends EnumArrayWithDefault>(
-  options: EnumArrayWithDefault
-): Argument<EnumArrayType<O>[]>
-export function enumArrayArgument<const O extends EnumArrayWithoutDefault>(
-  options: EnumArrayWithoutDefault
-): Argument<EnumArrayType<O>[] | undefined>
-export function enumArrayArgument<const O extends EnumArrayWithOptionalDefault>(
-  options: EnumArrayWithOptionalDefault
+export function enumArrayArgument<
+  const O extends { defaultValue: string[]; validValues: string[] } & PerArgumentArgs
+>(options: NoExtraKeys<O, EnumArrayOptions>): Argument<EnumArrayType<O>[]>
+export function enumArrayArgument<
+  const O extends { defaultValue?: undefined; validValues: string[] } & PerArgumentArgs
+>(options: NoExtraKeys<O, EnumArrayOptions>): Argument<EnumArrayType<O>[] | undefined>
+export function enumArrayArgument<
+  const O extends { defaultValue?: string[] | undefined; validValues: string[] } & PerArgumentArgs
+>(
+  options: NoExtraKeys<O, EnumArrayOptions>
 ): Argument<EnumArrayType<O>[]> | Argument<EnumArrayType<O>[] | undefined> {
   return {
     description:

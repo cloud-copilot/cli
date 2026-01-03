@@ -236,12 +236,10 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     name: 'fail if no arguments to a single value option',
     args: {
       fooBar: stringArgument({
-        description: 'A foo bar option',
-        values: 'single'
+        description: 'A foo bar option'
       }),
       bazBang: stringArgument({
-        description: 'A baz',
-        values: 'single'
+        description: 'A baz'
       })
     },
     additionalArgs: {
@@ -258,12 +256,10 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     name: 'show full option name in error message',
     args: {
       fooBar: stringArgument({
-        description: 'A foo bar option',
-        values: 'single'
+        description: 'A foo bar option'
       }),
       bazBang: stringArgument({
-        description: 'A baz',
-        values: 'single'
+        description: 'A baz'
       })
     },
     additionalArgs: {
@@ -1384,7 +1380,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
       }
     },
     args: {
-      bazBang: stringArgument({ description: 'baz bang', values: 'single' })
+      bazBang: stringArgument({ description: 'baz bang' })
     },
     additionalArgs: {
       args: ['download', '--foo-bar', 'arg1', '--baz-bang', 'arg2']
@@ -1407,7 +1403,7 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
       }
     },
     args: {
-      bazBang: stringArgument({ description: 'baz bang', values: 'single' })
+      bazBang: stringArgument({ description: 'baz bang' })
     },
     additionalArgs: {
       envPrefix: 'DAVE',
