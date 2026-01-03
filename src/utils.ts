@@ -14,3 +14,10 @@ export function exit(exitCode: number, message: string | undefined) {
   }
   process.exit(exitCode)
 }
+
+/**
+ * A utility type to ensure that T has exactly the keys of U, no more and no less.
+ */
+export type NoExtraKeys<T, Shape> = {
+  [K in keyof T]: K extends keyof Shape ? T[K] : never
+}
