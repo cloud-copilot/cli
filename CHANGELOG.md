@@ -1,3 +1,10 @@
+## [0.2.30](https://github.com/cloud-copilot/cli/compare/v0.2.29...v0.2.30) (2026-01-03)
+
+
+### Bug Fixes
+
+* Correct return types for enum arguments ([12b666b](https://github.com/cloud-copilot/cli/commit/12b666b275370d7bbb1b9a63f9f50d6d21af8a70))
+
 ## [0.2.29](https://github.com/cloud-copilot/cli/compare/v0.2.28...v0.2.29) (2026-01-03)
 
 ## [0.2.28](https://github.com/cloud-copilot/cli/compare/v0.2.27...v0.2.28) (2026-01-01)
