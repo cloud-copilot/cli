@@ -1,4 +1,4 @@
-import { ValidatedValues } from './argument.js'
+import { type ValidatedValues } from './argument.js'
 import { arrayValueArgument } from './arrayValueArgument.js'
 import { singleValueArgument } from './singleValueArgument.js'
 

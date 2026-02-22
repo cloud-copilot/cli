@@ -1,4 +1,4 @@
-import { Argument, PerArgumentArgs, ValidatedValues } from './argument.js'
+import { type Argument, type PerArgumentArgs, type ValidatedValues } from './argument.js'
 
 type MapResult = Record<string, string[]>
 
