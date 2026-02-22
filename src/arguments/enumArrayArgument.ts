@@ -1,5 +1,5 @@
-import { NoExtraKeys } from '../utils.js'
-import { Argument, PerArgumentArgs, ValidatedValues } from './argument.js'
+import { type NoExtraKeys } from '../utils.js'
+import { type Argument, type PerArgumentArgs, type ValidatedValues } from './argument.js'
 
 type EnumArrayType<T extends { validValues: string[]; defaultValue?: string[] | undefined }> =
   T['defaultValue'] extends string[]

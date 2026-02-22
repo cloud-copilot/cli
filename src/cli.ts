@@ -1,4 +1,4 @@
-import { Argument } from './arguments/argument.js'
+import { type Argument } from './arguments/argument.js'
 import { exit } from './utils.js'
 
 type ParsedArguments<T extends Record<string, Argument<any>>> = {
