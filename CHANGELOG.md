@@ -1,3 +1,5 @@
+## [0.2.39](https://github.com/cloud-copilot/cli/compare/v0.2.38...v0.2.39) (2026-02-24)
+
 ## [0.2.38](https://github.com/cloud-copilot/cli/compare/v0.2.37...v0.2.38) (2026-02-23)
 
 ## [0.2.37](https://github.com/cloud-copilot/cli/compare/v0.2.36...v0.2.37) (2026-02-23)
