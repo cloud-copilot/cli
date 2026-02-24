@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Argument } from './arguments/argument.js'
+import type { Argument } from './arguments/argument.js'
 import { booleanArgument } from './arguments/booleanArgument.js'
 import { enumArgument } from './arguments/enumArgument.js'
 import { singleValueArgument } from './arguments/singleValueArgument.js'
 import { stringArgument } from './arguments/stringArguments.js'
-import { AdditionalCliOptions, Subcommand, parseCliArguments } from './cli.js'
+import { type AdditionalCliOptions, type Subcommand, parseCliArguments } from './cli.js'
 import { exit } from './utils.js'
 vi.mock('./utils.js')
 
