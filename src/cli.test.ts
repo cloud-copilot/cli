@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Argument } from './arguments/argument.js'
+import type { Argument } from './arguments/argument.js'
 import { booleanArgument } from './arguments/booleanArgument.js'
 import { enumArgument } from './arguments/enumArgument.js'
 import { enumArrayArgument } from './arguments/enumArrayArgument.js'
@@ -7,8 +7,8 @@ import { mapArgument } from './arguments/mapArgument.js'
 import { numberArgument, numberArrayArgument } from './arguments/numberArguments.js'
 import { stringArgument, stringArrayArgument } from './arguments/stringArguments.js'
 import {
-  AdditionalCliOptions,
-  Subcommand,
+  type AdditionalCliOptions,
+  type Subcommand,
   camelToCapitalSnakeCase,
   camelToKebabCase,
   parseCliArguments
