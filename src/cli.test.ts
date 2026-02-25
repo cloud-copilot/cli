@@ -285,13 +285,12 @@ const parseCliArgumentsTests: ParseCliArgumentsTest[] = [
     expected: {
       exit: {
         code: 2,
-        message:
-          'Validation error for --foo-bar: expects a single values but was set multiple times'
+        message: 'Validation error for --foo-bar: expects a single value but was set multiple times'
       }
     }
   },
   {
-    name: 'string array with defautlt value and no arguments provided',
+    name: 'string array with default value and no arguments provided',
     args: {
       fooBar: stringArrayArgument({
         description: 'A foo bar option',
