@@ -34,7 +34,7 @@ export function singleValueArgument<ValueType>(
         if (currentValue !== undefined && currentValue != options.defaultValue) {
           return {
             valid: false,
-            message: 'expects a single values but was set multiple times'
+            message: 'expects a single value but was set multiple times'
           }
         }
         if (values.length == 0) {
