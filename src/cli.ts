@@ -129,23 +129,22 @@ export type SelectedSubcommandWithArgs<
           printHelp: () => void
         }
       }[keyof C]
-    :
-        | {
-            subcommand: undefined
-            args: ParsedArguments<O>
+    : | {
+          subcommand: undefined
+          args: ParsedArguments<O>
+          operands: OperandsType<A>
+          anyValues: boolean
+          printHelp: () => void
+        }
+      | {
+          [K in keyof C]: {
+            subcommand: K
+            args: ParsedArguments<C[K]['arguments']> & ParsedArguments<O>
             operands: OperandsType<A>
             anyValues: boolean
             printHelp: () => void
           }
-        | {
-            [K in keyof C]: {
-              subcommand: K
-              args: ParsedArguments<C[K]['arguments']> & ParsedArguments<O>
-              operands: OperandsType<A>
-              anyValues: boolean
-              printHelp: () => void
-            }
-          }[keyof C]
+        }[keyof C]
 
 type Only<A, B> = {
   [K in keyof A]: K extends keyof B ? A[K] : never
