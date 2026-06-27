@@ -1,3 +1,11 @@
+## [0.2.57](https://github.com/cloud-copilot/cli/compare/v0.2.56...v0.2.57) (2026-06-27)
+
+
+### Bug Fixes
+
+* pin dependency action to merged commit ([27f6fc8](https://github.com/cloud-copilot/cli/commit/27f6fc878062793db83050bea688d7f5e92bf110))
+* update dependency action reference ([1b32492](https://github.com/cloud-copilot/cli/commit/1b3249251b6eb6f2fb8ec0ebf4f229a214fd13df))
+
 ## [0.2.56](https://github.com/cloud-copilot/cli/compare/v0.2.55...v0.2.56) (2026-06-20)
 
 ## [0.2.55](https://github.com/cloud-copilot/cli/compare/v0.2.54...v0.2.55) (2026-06-13)
