@@ -1,3 +1,5 @@
+## [0.2.73](https://github.com/act-security-labs/cli/compare/v0.2.72...v0.2.73) (2026-10-10)
+
 ## [0.2.72](https://github.com/act-security-labs/cli/compare/v0.2.71...v0.2.72) (2026-10-03)
 
 ## [0.2.71](https://github.com/act-security-labs/cli/compare/v0.2.70...v0.2.71) (2026-09-26)
